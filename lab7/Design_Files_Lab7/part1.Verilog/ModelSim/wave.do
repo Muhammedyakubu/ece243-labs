@@ -16,6 +16,7 @@ add wave -noupdate -label r0 -radix hexadecimal /testbench/U1/r0
 add wave -noupdate -label r1 -radix hexadecimal /testbench/U1/r1
 add wave -noupdate -label A -radix hexadecimal /testbench/U1/A
 add wave -noupdate -label G -radix hexadecimal /testbench/U1/G
+add wave -noupdate -label Select -radix binary /testbench/U1/BusWires
 add wave -noupdate -label BusWires -radix hexadecimal /testbench/U1/BusWires
 TreeUpdate [SetDefaultTree]
 WaveRestoreCursors {{Cursor 1} {260000 ps} 0}

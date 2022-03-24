@@ -78,7 +78,7 @@ module proc(DIN, Resetn, Clock, Run, Done);
 						Done = 1'b1;
                     end
                     mvt: begin
-                        if (Imm) Select = IR7_0_0_0_SELECT; //mvt rX, #D
+                        Select = IR7_0_0_0_SELECT; //mvt rX, #D
 						rX_in = 1'b1; //enable rX
 						Done = 1'b1;
                     end
