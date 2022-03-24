@@ -24,7 +24,7 @@ module testbench ( );
 	end // initial
 
 	initial begin
-				Run	<= 1'b0;	Instruction	<= 16'b0000000000000000;	
+			Run	<= 1'b0;	Instruction	<= 16'b0000000000000000;	
 		#20	Run	<= 1'b1; Instruction	<= 16'b0001000000011100; // mv  r0, #28	
 		#20	Run	<= 1'b0; 
 		#20	Run	<= 1'b1; Instruction	<= 16'b0011001011111111; // mvt r1, #0xFF00
