@@ -1,0 +1,71 @@
+m255
+K4
+z2
+13
+!s112 1.1
+!i10d 8192
+!i10e 25
+!i10f 100
+cModel Technology
+Z0 dC:/Users/profb/Dropbox/UofT/Courses/ece243_22/Labs/Lab6/Design_Files/FSM_example_DE1-SoC/sim
+vFSM_control
+Z1 !s110 1646971237
+!i10b 1
+!s100 _CjQ^;AjjIVL8nLU3dQ_Q1
+IRSYJYGkLk_TgY[ScPb5i^2
+Z2 VDg1SIo80bB@j0V0VzS_@n1
+R0
+w1542851188
+8../FSM_control.v
+F../FSM_control.v
+L0 5
+Z3 OV;L;10.5b;63
+r1
+!s85 0
+31
+Z4 !s108 1646971237.000000
+Z5 !s107 ../top.v|../FSM_control.v|
+Z6 !s90 ../FSM_control.v|../top.v|
+!i113 1
+Z7 tCvgOpt 0
+n@f@s@m_control
+vtb
+R1
+!i10b 1
+!s100 `dSK8GlbH7CnN:WKZA=I60
+I7TUGeW80<Ue3`LOTCFdN13
+R2
+R0
+w1610675016
+8../tb/tb.v
+F../tb/tb.v
+L0 9
+R3
+r1
+!s85 0
+31
+!s108 1646971236.000000
+!s107 ../tb/tb.v|
+!s90 ../tb/tb.v|
+!i113 1
+R7
+vtop
+R1
+!i10b 1
+!s100 Z?0b>9>oUWmoY<if=TXcg1
+IE[o=A56YX4>mHN;9@<?jA1
+R2
+R0
+w1611016870
+8../top.v
+F../top.v
+L0 4
+R3
+r1
+!s85 0
+31
+R4
+R5
+R6
+!i113 1
+R7
