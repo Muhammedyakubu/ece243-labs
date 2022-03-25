@@ -108,7 +108,8 @@ module proc(DIN, Resetn, Clock, Run, DOUT, ADDR, W);
 						A_in = 1'b1; //enable rX
                     end
                     ld, st: begin
-                        // ... your code goes here
+                        Select = rY;
+                        ADDR_in = 1'b1;
                     end
                     default: ;
                 endcase
@@ -134,7 +135,9 @@ module proc(DIN, Resetn, Clock, Run, DOUT, ADDR, W);
                     ld: // wait cycle for synchronous memory
                         ;
                     st: begin
-                        // ... your code goes here
+                        Select = rX;
+                        DOUT_in = 1'b1;
+                        W_D = 1'b1;
                     end
                     default: ; 
                 endcase
@@ -146,10 +149,13 @@ module proc(DIN, Resetn, Clock, Run, DOUT, ADDR, W);
 						Done = 1'b1;
                     end
                     ld: begin
-                        // ... your code goes here
+                        Select = DIN_SELECT;
+                        rX_in = 1'b1;
+                        Done = 1'b1;
+                    end
                     end
                     st: // wait cycle for synhronous memory
-                        // ... your code goes here
+                        Done = 1'b1;
                     default: ;
                 endcase
             default: ;
