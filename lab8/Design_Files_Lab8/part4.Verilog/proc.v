@@ -19,7 +19,9 @@ module proc(DIN, Resetn, Clock, Run, DOUT, ADDR, W);
     reg pc_in;      // used to load the pc
     reg W_D;        // used for write signal
     wire Imm;
+    wire [3:0] Sel;
    
+    assign Sel = Select;
     assign III = IR[15:13];
     assign Imm = IR[12];
     assign rX = IR[11:9];
