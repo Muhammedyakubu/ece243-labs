@@ -27,12 +27,12 @@ module part3 (KEY, SW, CLOCK_50, LEDR);
 	inst_mem U4 (ADDR[7:0], CLOCK_50, DOUT, inst_mem_cs & W, inst_mem_q);
 
 	always @ (*)
-	if (inst_mem_cs == 1'b1)
-		DIN = inst_mem_q;
-	else if (SW_cs == 1'b1)
-		DIN = {7'b0000000, SW_reg};
-	else
-		DIN = 16'bxxxxxxxxxxxxxxxx;
+		if (inst_mem_cs == 1'b1)
+			DIN = inst_mem_q;
+		else if (SW_cs == 1'b1)
+			DIN = {7'b0000000, SW_reg};
+		else
+			DIN = 16'bxxxxxxxxxxxxxxxx;
 
 	// module regn(R, Rin, Clock, Q);
 	regn #(.n(9)) U5 (DOUT[8:0], KEY[0], LED_reg_cs & W, CLOCK_50, LED_reg);

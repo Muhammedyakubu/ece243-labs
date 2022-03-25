@@ -99,10 +99,13 @@ module proc(DIN, Resetn, Clock, Run, DOUT, ADDR, W);
                         Done = 1'b1;
                     end
                     mvt: begin
-                        // ... your code goes here
+                        Select = IR7_0_0_0_SELECT; //mvt rX, #D
+						rX_in = 1'b1; //enable rX
+						Done = 1'b1;
                     end
                     add, sub, and_: begin
-                        // ... your code goes here
+                        Select = rX; //add rX, rY
+						A_in = 1'b1; //enable rX
                     end
                     ld, st: begin
                         // ... your code goes here
@@ -112,13 +115,21 @@ module proc(DIN, Resetn, Clock, Run, DOUT, ADDR, W);
             T4: // define signals T2
                 case (III)
                     add: begin
-                        // ... your code goes here
+                        if (!Imm) Select = rY; //mv rX, rY
+						else Select = SGN_IR8_0_SELECT; //mv rX, #D
+						G_in = 1'b1;
                     end
                     sub: begin
-                        // ... your code goes here
+                        if (!Imm) Select = rY; //mv rX, rY
+						else Select = SGN_IR8_0_SELECT; //mv rX, #D
+						AddSub = 1'b1;
+						G_in = 1'b1;
                     end
                     and_: begin
-                        // ... your code goes here
+                        if (!Imm) Select = rY; //mv rX, rY
+						else Select = SGN_IR8_0_SELECT; //mv rX, #D
+						ALU_and = 1'b1;
+						G_in = 1'b1;
                     end
                     ld: // wait cycle for synchronous memory
                         ;
@@ -130,7 +141,9 @@ module proc(DIN, Resetn, Clock, Run, DOUT, ADDR, W);
             T5: // define T3
                 case (III)
                     add, sub, and_: begin
-                        // ... your code goes here
+                        Select = G_SELECT; //mv rX, rY
+						rX_in = 1'b1;
+						Done = 1'b1;
                     end
                     ld: begin
                         // ... your code goes here
