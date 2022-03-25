@@ -153,6 +153,7 @@ module proc(DIN, Resetn, Clock, Run, DOUT, ADDR, W);
                         rX_in = 1'b1;
                         Done = 1'b1;
                     end
+                    end
                     st: // wait cycle for synhronous memory
                         Done = 1'b1;
                     default: ;
@@ -200,7 +201,7 @@ module proc(DIN, Resetn, Clock, Run, DOUT, ADDR, W);
 
     // define the internal processor bus
     always @(*)
-        case (Select)
+        case (Sel)
             R0_SELECT: BusWires = r0;
             R1_SELECT: BusWires = r1;
             R2_SELECT: BusWires = r2;
