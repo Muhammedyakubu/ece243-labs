@@ -1,10 +1,10 @@
 .define LED_ADDRESS 0x10 
 .define HEX_ADDRESS 0x20 
 .define SW_ADDRESS 0x30
-.define SPEED_1 50000000
-.define SPEED_2 25000000
-.define SPEED_3 12500000
-.define SPEED_4 6500000
+.define SPEED_1 0xFF
+.define SPEED_2 0x7F
+.define SPEED_3 0x3F
+.define SPEED_4 0x1F
 
 MAIN_LOOP:
     // poll the switches into r1
@@ -28,16 +28,16 @@ MAIN_LOOP:
 
 // set delay in r0
 SET_SPEED_1: 
-    mv r0, SPEED_1
+    mvt r0, #SPEED_1
     b  DELAY
 SET_SPEED_2: 
-    mv r0, SPEED_2
+    mvt r0, #SPEED_2
     b  DELAY
 SET_SPEED_3:
-    mv r0, SPEED_3
+    mvt r0, #SPEED_3
     b  DELAY
 SET_SPEED_4:
-    mv r0, SPEED_4
+    mvt r0, #SPEED_4
     b  DELAY
 
 DELAY:
