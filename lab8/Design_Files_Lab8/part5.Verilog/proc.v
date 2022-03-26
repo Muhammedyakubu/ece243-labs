@@ -134,18 +134,21 @@ module proc(DIN, Resetn, Clock, Run, DOUT, ADDR, W);
                         if (!Imm) Select = rY; //mv rX, rY
 						else Select = SGN_IR8_0_SELECT; //mv rX, #D
 						G_in = 1'b1;
+                        F_in = 1'b1;
                     end
                     sub: begin
                         if (!Imm) Select = rY; //mv rX, rY
 						else Select = SGN_IR8_0_SELECT; //mv rX, #D
 						AddSub = 1'b1;
 						G_in = 1'b1;
+                        F_in = 1'b1;
                     end
                     and_: begin
                         if (!Imm) Select = rY; //mv rX, rY
 						else Select = SGN_IR8_0_SELECT; //mv rX, #D
 						ALU_and = 1'b1;
 						G_in = 1'b1;
+                        F_in = 1'b1;
                     end
                     ld: // wait cycle for synchronous memory
                         ;
