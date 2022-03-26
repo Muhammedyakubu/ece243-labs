@@ -14,7 +14,7 @@ module proc(DIN, Resetn, Clock, Run, DOUT, ADDR, W);
     reg [3:0] Select; // BusWires selector
     reg [15:0] Sum;
     reg Cout;
-    wire [2:0] III, rX, rY; // instruction opcode and register operands
+    wire [2:0] III, rX, rY, cond; // instruction opcode and register operands
     wire [15:0] r0, r1, r2, r3, r4, r5, r6, pc, A;
     wire [15:0] G;
     wire [15:0] IR;
@@ -29,6 +29,7 @@ module proc(DIN, Resetn, Clock, Run, DOUT, ADDR, W);
     assign III = IR[15:13];
     assign Imm = IR[12];
     assign rX = IR[11:9];
+    assign cond = IR[11:9];
     assign rY = IR[2:0];
     dec3to8 decX (rX_in, rX, R_in); // produce r0 - r7 register enables
     regn #(.n(3)) Flags ({Cout, Sum[15], ~Sum}, Resetn, F_in, Clock, Flags, {c, n, z}); // flags for b{cond}
@@ -71,7 +72,7 @@ module proc(DIN, Resetn, Clock, Run, DOUT, ADDR, W);
     *  101 0: st   rX,[rY]  [rY] <- rX
     *  110 0: and  rX,rY    rX <- rX & rY
     *  110 1: and  rX,#D    rX <- rX & D */
-    parameter mv = 3'b000, mvt = 3'b001, add = 3'b010, sub = 3'b011, ld = 3'b100, st = 3'b101,
+    parameter mv = 3'b000, mvt = 3'b001, b_ = mvt, add = 3'b010, sub = 3'b011, ld = 3'b100, st = 3'b101,
 	     and_ = 3'b110;
     // selectors for the BusWires multiplexer
     parameter R0_SELECT = 4'b0000, R1_SELECT = 4'b0001, R2_SELECT = 4'b0010, 
@@ -80,6 +81,7 @@ module proc(DIN, Resetn, Clock, Run, DOUT, ADDR, W);
         SGN_IR8_0_SELECT /* signed-extended immediate data */ = 4'b1001, 
         IR7_0_0_0_SELECT /* immediate data << 8 */ = 4'b1010,
         DIN_SELECT /* data-in from memory */ = 4'b1011;
+    parameter _none = 3'b000, _eq = 3'b001, _ne = 3'b010, _cc = 3'b011, _cs = 3'b100, _pl = 3'b101, _mi = 3'b110; // condition codes
     // Control FSM outputs
     always @(*) begin
         // default values for control signals
@@ -106,9 +108,15 @@ module proc(DIN, Resetn, Clock, Run, DOUT, ADDR, W);
                         Done = 1'b1;
                     end
                     mvt: begin
-                        Select = IR7_0_0_0_SELECT; //mvt rX, #D
-						rX_in = 1'b1; //enable rX
-						Done = 1'b1;
+                        if (Imm) begin  // regular mvt
+                            Select = IR7_0_0_0_SELECT; //mvt rX, #D
+                            rX_in = 1'b1; //enable rX
+                            Done = 1'b1;
+                        end
+                        else begin  // case for b_
+                            Select = PC_SELECT;
+                            A_in = 1'b1;                        
+                        end
                     end
                     add, sub, and_: begin
                         Select = rX; //add rX, rY
@@ -146,6 +154,10 @@ module proc(DIN, Resetn, Clock, Run, DOUT, ADDR, W);
                         DOUT_in = 1'b1;
                         W_D = 1'b1;
                     end
+                    b_: if (!Imm) begin
+                            Select = SGN_IR8_0_SELECT;
+                            G_in = 1'b1; 
+                        end
                     default: ; 
                 endcase
             T5: // define T3
@@ -162,6 +174,20 @@ module proc(DIN, Resetn, Clock, Run, DOUT, ADDR, W);
                     end
                     st: // wait cycle for synhronous memory
                         Done = 1'b1;
+                    b_: if (!Imm) begin // this is straight from brown's video
+                            Select = G_SELECT
+                            case (cond)
+                                _none: pc_in = 1'b1;
+                                _eq: if (z) pc_in = 1'b1;
+                                _ne: if (!z) pc_in = 1'b1;
+                                _cc: if (!c) pc_in = 1'b1;
+                                _cs: if (c) pc_in = 1'b1;
+                                _pl: if (!n) pc_in = 1'b1;
+                                _mi: if (n) pc_in = 1'b1;
+                                default: ;
+                            endcase
+                        Done = 1'b1;
+                        end
                     default: ;
                 endcase
             default: ;
