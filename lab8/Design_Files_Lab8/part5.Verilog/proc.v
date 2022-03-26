@@ -8,11 +8,12 @@ module proc(DIN, Resetn, Clock, Run, DOUT, ADDR, W);
     output wire W;
 
     wire [0:7] R_in; // r0, ..., r7 register enables
-    reg rX_in, IR_in, ADDR_in, Done, DOUT_in, A_in, G_in, AddSub, ALU_and;
+    reg rX_in, IR_in, ADDR_in, Done, DOUT_in, A_in, F_in, G_in, AddSub, ALU_and;
     reg [2:0] Tstep_Q, Tstep_D;
     reg [15:0] BusWires;
     reg [3:0] Select; // BusWires selector
     reg [15:0] Sum;
+    reg Cout;
     wire [2:0] III, rX, rY; // instruction opcode and register operands
     wire [15:0] r0, r1, r2, r3, r4, r5, r6, pc, A;
     wire [15:0] G;
@@ -22,13 +23,15 @@ module proc(DIN, Resetn, Clock, Run, DOUT, ADDR, W);
     reg W_D;        // used for write signal
     wire Imm;
     wire [3:0] Sel;
-   
+    wire c, n, z;
+
     assign Sel = Select;
     assign III = IR[15:13];
     assign Imm = IR[12];
     assign rX = IR[11:9];
     assign rY = IR[2:0];
     dec3to8 decX (rX_in, rX, R_in); // produce r0 - r7 register enables
+    regn #(.n(3)) Flags ({Cout, Sum[15], ~Sum}, Resetn, F_in, Clock, Flags, {c, n, z}); // flags for b{cond}
 
     parameter T0 = 3'b000, T1 = 3'b001, T2 = 3'b010, T3 = 3'b011, T4 = 3'b100, T5 = 3'b101;
 
@@ -195,11 +198,11 @@ module proc(DIN, Resetn, Clock, Run, DOUT, ADDR, W);
     always @(*)
         if (!ALU_and)
             if (!AddSub)
-                Sum = A + BusWires;
+                {Cout, Sum} = A + BusWires;
             else
-                Sum = A + ~BusWires + 16'b1;
+                {Cout, Sum} = A + ~BusWires + 16'b1;
 		  else
-            Sum = A & BusWires;
+            {Cout, Sum} = A & BusWires;
     regn reg_G (Sum, Resetn, G_in, Clock, G);
 
     // define the internal processor bus
