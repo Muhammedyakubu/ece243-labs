@@ -32,7 +32,7 @@ module proc(DIN, Resetn, Clock, Run, DOUT, ADDR, W);
     assign cond = IR[11:9];
     assign rY = IR[2:0];
     dec3to8 decX (rX_in, rX, R_in); // produce r0 - r7 register enables
-    regn #(.n(3)) Flags ({Cout, Sum[15], ~Sum}, Resetn, F_in, Clock, Flags, {c, n, z}); // flags for b{cond}
+    regn #(.n(3)) Flags ({Cout, Sum[15], ~Sum}, Resetn, F_in, Clock, {c, n, z}); // flags for b{cond}
 
     parameter T0 = 3'b000, T1 = 3'b001, T2 = 3'b010, T3 = 3'b011, T4 = 3'b100, T5 = 3'b101;
 
@@ -178,7 +178,7 @@ module proc(DIN, Resetn, Clock, Run, DOUT, ADDR, W);
                     st: // wait cycle for synhronous memory
                         Done = 1'b1;
                     b_: if (!Imm) begin // this is straight from brown's video
-                            Select = G_SELECT
+                            Select = G_SELECT;
                             case (cond)
                                 _none: pc_in = 1'b1;
                                 _eq: if (z) pc_in = 1'b1;

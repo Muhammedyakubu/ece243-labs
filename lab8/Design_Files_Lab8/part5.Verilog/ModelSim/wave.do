@@ -22,6 +22,7 @@ add wave -noupdate -label Buswires -radix hexadecimal /testbench/U1/U3/BusWires
 add wave -noupdate -label Sel /testbench/U1/U3/Sel
 add wave -noupdate -label z /testbench/U1/U3/z
 add wave -noupdate -label c /testbench/U1/U3/c
+add wave -noupdate -label n /testbench/U1/U3/n
 TreeUpdate [SetDefaultTree]
 WaveRestoreCursors {{Cursor 1} {538412 ps} 0}
 quietly wave cursor active 1
