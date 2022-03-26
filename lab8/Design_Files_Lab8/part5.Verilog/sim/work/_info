@@ -9,7 +9,7 @@ z2
 cModel Technology
 Z0 dW:/ece243/ece243-labs/lab8/Design_Files_Lab8/part5.Verilog/sim
 vdec3to8
-Z1 !s110 1648280957
+Z1 !s110 1648281708
 !i10b 1
 !s100 zK@TkSeJaRzG?;^4Cf4bF2
 IJ6C70PWi3dBLTlM4WAAUQ1
@@ -23,13 +23,13 @@ Z6 OV;L;10.5b;63
 r1
 !s85 0
 31
-Z7 !s108 1648280956.000000
+Z7 !s108 1648281707.000000
 Z8 !s107 ../top.v|../seg7.v|../proc.v|../part5.v|../inst_mem.v|../flipflop.v|
 Z9 !s90 ../flipflop.v|../inst_mem.v|../part5.v|../proc.v|../seg7.v|../top.v|
 !i113 1
 Z10 tCvgOpt 0
 vflipflop
-Z11 !s110 1648280956
+Z11 !s110 1648281707
 !i10b 1
 !s100 4H2K_V>f3BSlSog@_SfWf0
 If;>LCi5HH2UkIZ<N0]YNc1
@@ -203,7 +203,7 @@ R6
 r1
 !s85 0
 31
-!s108 1648280955.000000
+!s108 1648281706.000000
 !s107 ../tb/tb.v|
 !s90 ../tb/tb.v|
 !i113 1
