@@ -32,7 +32,7 @@ module proc(DIN, Resetn, Clock, Run, DOUT, ADDR, W);
     assign cond = IR[11:9];
     assign rY = IR[2:0];
     dec3to8 decX (rX_in, rX, R_in); // produce r0 - r7 register enables
-    regn #(.n(3)) Flags ({Cout, Sum[15], ~Sum}, Resetn, F_in, Clock, {c, n, z}); // flags for b{cond}
+    regn #(.n(3)) Flags ({Cout, Sum[15], ~|Sum}, Resetn, F_in, Clock, {c, n, z}); // flags for b{cond}
 
     parameter T0 = 3'b000, T1 = 3'b001, T2 = 3'b010, T3 = 3'b011, T4 = 3'b100, T5 = 3'b101;
 
@@ -85,7 +85,7 @@ module proc(DIN, Resetn, Clock, Run, DOUT, ADDR, W);
     // Control FSM outputs
     always @(*) begin
         // default values for control signals
-        rX_in = 1'b0; A_in = 1'b0; G_in = 1'b0; IR_in = 1'b0; DOUT_in = 1'b0; ADDR_in = 1'b0; 
+        rX_in = 1'b0; A_in = 1'b0; F_in	= 1'b0; G_in = 1'b0; IR_in = 1'b0; DOUT_in = 1'b0; ADDR_in = 1'b0; 
         Select = 4'bxxxx; AddSub = 1'b0; ALU_and = 1'b0; W_D = 1'b0; Done = 1'b0;
         pc_in = R_in[7] /* default pc enable */; pc_incr = 1'b0;
 
