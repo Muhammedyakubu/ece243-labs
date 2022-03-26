@@ -6,7 +6,14 @@
 .define SPEED_3 0x3F
 .define SPEED_4 0x1F
 
+
+    mv r3, #0x00
 MAIN_LOOP:
+    mvt r4, #LED_ADDRESS
+    // r3 holds the external counter value
+    add r3, #1
+    st  r3, [r4]
+
     // poll the switches into r1
     mvt r2, #SW_ADDRESS
     ld  r1, [r2]
