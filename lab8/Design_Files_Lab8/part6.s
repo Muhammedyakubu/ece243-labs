@@ -18,17 +18,17 @@ MAIN_LOOP:  mvt r4, #LED_ADDRESS
             mvt r2, #SW_ADDRESS
             ld  r1, [r2]
 
-            sub r1, #0x1
-            bpl OUTER_LOOP
+            sub r1, #0x0
+            bpl BEGIN_OUTER
 
-            mv  r1, #0x2
-            b   OUTER_LOOP   
+            b MAIN_LOOP
 
+BEGIN_OUTER: add r1, #0x2
 OUTER_LOOP: sub r1, #1
             bne INNER_LOOP
             b   MAIN_LOOP
 
-INNER_LOOP: mv  r0, #SPEED_1
+INNER_LOOP: mv  r0, #SPEED_3
             b   DELAY
 
 DELAY:
