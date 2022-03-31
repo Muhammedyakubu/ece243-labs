@@ -18,37 +18,21 @@ MAIN_LOOP:  mvt r4, #LED_ADDRESS
             mvt r2, #SW_ADDRESS
             ld  r1, [r2]
 
-            sub r1, #1
-            beq SET_SPEED_1
+            sub r1, #0x1
+            bpl OUTER_LOOP
 
-            sub r1, #1
-            beq SET_SPEED_2
+            mv  r1, #0x2
+            b   OUTER_LOOP   
 
-            sub r1, #1
-            beq SET_SPEED_3
+OUTER_LOOP: sub r1, #1
+            bne INNER_LOOP
+            b   MAIN_LOOP
 
-            sub r1, #1
-            beq SET_SPEED_4
-
-            b SET_SPEED_1 // if not any of the above, then set to default speed   
-
-
-// set delay in r0
-SET_SPEED_1: 
-    mv r0, #SPEED_1
-    b  DELAY
-SET_SPEED_2: 
-    mv r0, #SPEED_2
-    b  DELAY
-SET_SPEED_3:
-    mv r0, #SPEED_3
-    b  DELAY
-SET_SPEED_4:
-    mv r0, #SPEED_4
-    b  DELAY
+INNER_LOOP: mv  r0, #SPEED_1
+            b   DELAY
 
 DELAY:
     sub r0, #1
     bne DELAY
-    b   MAIN_LOOP
+    b   OUTER_LOOP
      
