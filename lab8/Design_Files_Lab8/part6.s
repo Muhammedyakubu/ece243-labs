@@ -28,7 +28,7 @@ OUTER_LOOP: sub r1, #1
             bne INNER_LOOP
             b   MAIN_LOOP
 
-INNER_LOOP: mv  r0, #SPEED_3
+INNER_LOOP: mvt  r0, #SPEED_1
             b   DELAY
 
 DELAY:

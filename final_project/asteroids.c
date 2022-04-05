@@ -15,6 +15,7 @@
 #define CHAR_BUF_CTRL_BASE    0xFF203030
 
 /* VGA colors */
+#define BLACK 0x0000
 #define WHITE 0xFFFF
 #define YELLOW 0xFFE0
 #define RED 0xF800
@@ -35,6 +36,7 @@
 /* Constants for animation */
 #define ASTEROID_SIZE 4 // side length of asteroid in pixels
 #define NUM_ASTEROIDS 8 // max number of asteroids on the screen at once
+#define NUM_BULLETS 8 // max number of bullets on the screen at once
 
 #define FALSE 0
 #define TRUE 1
@@ -43,15 +45,20 @@
 #include <stdio.h>
 #include <stdbool.h>
 
-////////////////// S T R U C T S //////////////////
+//================== S T R U C T S ==================//
 
-
-typedef struct point
+typedef struct Vector
 {
     int x, y;
-} Point;
+} Vector;
 
-////////////////// F U N C T I O N    D E C L A R E S //////////////////
+typedef struct box
+{
+    Vector pos;
+    Vector dir;
+} Box;
+
+//================== F U N C T I O N    D E C L A R E S ==================//
 
 void wait_for_vsync();
 void swap(int * a, int * b);
@@ -60,7 +67,7 @@ void draw_line(int x0, int y0, int x1, int y1, short int color);
 void clear_screen();
 int get_rand_dir();
 
-////////////////// G L O B A L S //////////////////
+//================== G L O B A L S ==================//
 
 volatile int pixel_buffer_start; // global variable
 
@@ -68,7 +75,7 @@ volatile int pixel_buffer_start; // global variable
 
 int main(void)
 {
-    ////////////////// S E T U P //////////////////
+    //================== S E T U P ==================//
     
     volatile int * pixel_ctrl_ptr = (int *)0xFF203020;
     // declare other variables(not shown)
@@ -88,10 +95,13 @@ int main(void)
     pixel_buffer_start = *(pixel_ctrl_ptr + 1); // we draw on the back buffer
     clear_screen(); // pixel_buffer_start points to the pixel buffer
 
-    ////////////////// M A I N   L O O P //////////////////
+    //================== M A I N   L O O P ==================//
 
     while (1)
     {
+        /* Poll for input */
+        
+
         /* Erase any boxes and lines that were drawn in the last iteration */
         // code for updating the locations of boxes (not shown)
         update_locations();
@@ -186,6 +196,6 @@ void clear_screen()
     for (int y = 0; y < RESOLUTION_Y; y++)
     {
         int x0 = 0, x1 = RESOLUTION_X ;
-        draw_line(x0, y, x1, y, WHITE);
+        draw_line(x0, y, x1, y, BLACK);
     }
 }
