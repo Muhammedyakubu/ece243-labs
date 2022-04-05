@@ -37,6 +37,15 @@
 #define RESOLUTION_X 320
 #define RESOLUTION_Y 240
 
+#define KEY_NONE 0 // No key pressed
+#define KEY_RIGHT 116 // Keyboard Right Arrow
+#define KEY_LEFT 107 // Keyboard Left Arrow
+#define KEY_DOWN 114 // Keyboard Down Arrow
+#define KEY_UP 117 // Keyboard Up Arrow
+#define KEY_SPACE 41 // Keyboard Spacebar
+
+#define PS2_BASE              0xFF200100
+
 /* Constants for animation */
 
 /* not sure these are needed anymore */
@@ -90,7 +99,7 @@ Vector rotate(Vector, float);
 
 //================== S P A C E S H I P ==================//
 
-#define SHIP_ROTATION_SPEED 0.5 // fine tune later
+#define SHIP_ROTATION_SPEED M_PI/16 // fine tune later
 #define nSHIP_VERTICES 4
 
 typedef struct Ship {
@@ -100,6 +109,8 @@ typedef struct Ship {
     Vector velocity;
     // The angle the ship is pointing in radians
     float angle;
+    // The vertices of the ship
+    Vector vertices[nSHIP_VERTICES];
 } Ship;
 
 
@@ -180,18 +191,35 @@ int main(void)
 
     //================== M A I N   L O O P ==================//
 
-    float angle = 0;
+    volatile int* ps2_data = (int*)PS2_BASE;
+    int key_pressed = KEY_NONE;
+
+    Vector center = {RESOLUTION_X/2, RESOLUTION_Y/2};
+    Ship player = {
+        .position = center,
+        .velocity = {0, 0},
+        .angle = 0
+    };
+
     while (1)
     {   
         clear_screen();
-        angle = fmod(angle + SHIP_ROTATION_SPEED, 2 * M_PI);
-        // printf("angle: %f\n", angle);
-        /* Poll for input */
-        Vector center = {RESOLUTION_X/2, RESOLUTION_Y/2};
-        Vector player[nSHIP_VERTICES];
-        transform_model(player, playerModel, nSHIP_VERTICES, center, angle, 1);
-        draw_model(player, nSHIP_VERTICES, WHITE);
         
+        transform_model(player.vertices, playerModel, nSHIP_VERTICES, player.position, player.angle, 1);
+        draw_model(player.vertices, nSHIP_VERTICES, WHITE);
+
+        /* Poll for input */
+        key_pressed = (*ps2_data) & 0xff;  // get the last byte
+        printf("%d\n", key_pressed);
+
+        if (key_pressed == KEY_RIGHT)
+        {
+            rotate_ship_right(&player);
+        }
+        else if (key_pressed == KEY_LEFT)
+        {
+            rotate_ship_left(&player);
+        }
 
         /* Erase any boxes and lines that were drawn in the last iteration */
         // code for updating the locations of boxes (not shown)
