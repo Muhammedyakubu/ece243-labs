@@ -55,8 +55,8 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <stdbool.h>
-#include <./address_map_arm.h>
-#include <./usb_hid_keys.h>
+/* #include "./address_map_arm.h"
+#include "./usb_hid_keys.h" */
 
 
 /******************************************************************************
@@ -90,7 +90,8 @@ Vector rotate(Vector, float);
 
 //================== S P A C E S H I P ==================//
 
-#define SHIP_ROTATION_SPEED 0.1 // fine tune later
+#define SHIP_ROTATION_SPEED 0.5 // fine tune later
+#define nSHIP_VERTICES 4
 
 typedef struct Ship {
     // The position of the ship
@@ -125,9 +126,9 @@ void draw_line(int x0, int y0, int x1, int y1, short int color);
 void vec_draw_line(Vector a, Vector b, short int color);
 
 // returns a transformed model "trans" after applying the passed transformations to "model"
-void transformModel(Vector *trans, const Vector *model, int num_vertices, Vector translate, float angle, float scale);
+void transform_model(Vector *trans, const Vector *model, int num_vertices, Vector translate, float angle, float scale);
 // draws lines between each vector in the model
-void drawModel(Vector model[], int num_vertices, short int color);
+void draw_model(Vector *model, int num_vertices, short int color);
 
 
 //================== U T I L S ==================//
@@ -162,7 +163,7 @@ int main(void)
     volatile int * pixel_ctrl_ptr = (int *)0xFF203020;
     // declare other variables(not shown)
     // initialize location and direction of rectangles(not shown)
-    init();
+    // init();
 
     /* set front pixel buffer to start of FPGA On-chip memory */
     *(pixel_ctrl_ptr + 1) = 0xC8000000; // first store the address in the 
@@ -179,15 +180,22 @@ int main(void)
 
     //================== M A I N   L O O P ==================//
 
+    float angle = 0;
     while (1)
-    {
+    {   
+        clear_screen();
+        angle = fmod(angle + SHIP_ROTATION_SPEED, 2 * M_PI);
+        // printf("angle: %f\n", angle);
         /* Poll for input */
-
+        Vector center = {RESOLUTION_X/2, RESOLUTION_Y/2};
+        Vector player[nSHIP_VERTICES];
+        transform_model(player, playerModel, nSHIP_VERTICES, center, angle, 1);
+        draw_model(player, nSHIP_VERTICES, WHITE);
         
 
         /* Erase any boxes and lines that were drawn in the last iteration */
         // code for updating the locations of boxes (not shown)
-        update_locations();
+        // update_locations();
 
         // code for drawing the boxes and lines (not shown)
 
@@ -203,7 +211,8 @@ int main(void)
 //================== V E C T O R ==================//
 
 Vector new_vector() {
-    return {0, 0};
+    Vector v = {0, 0};
+    return v;
 }
 
 Vector vec_add(Vector a, Vector b) {
@@ -344,26 +353,33 @@ void clear_screen()
     }
 }
 
-void transformModel(Vector *trans, const Vector *model, int num_vertices, Vector t, float a, float sf)
+void transform_model(Vector *trans, const Vector *model, int num_vertices, Vector t, float a, float sf)
 {
     int i = 0;
     for(; i < num_vertices; i++)
     {   
-        // apply translation
-        trans[i] = vec_add(model[i], t);
         // apply rotation
         trans[i] = rotate(model[i], a);
+        // printf("rotated: trans.x = %f, trans.y = %f\n", trans[i].x, trans[i].y);
+
         // apply scaling
-        trans[i] = vec_mul(model[i], sf);
+        trans[i] = vec_mul(trans[i], sf);
+        // printf("scaled: trans.x = %f, trans.y = %f\n", trans[i].x, trans[i].y);
+
+        // apply translation
+        trans[i] = vec_add(trans[i], t);
+        // printf("translated: trans.x = %f, trans.y = %f\n", trans[i].x, trans[i].y);
+
     }
 }
 
-void drawModel(Vector model[], int num_vertices, short int color)
+void draw_model(Vector model[], int num_vertices, short int color)
 {
     int i = 0;
-    for(; i < num_vertices + 1; i++)
+    for(; i < num_vertices ; i++)
     {
         vec_draw_line(model[i], model[ (i+1) % num_vertices], color);
+        vec_plot_pixel(model[i], RED);
     }
 }
 
