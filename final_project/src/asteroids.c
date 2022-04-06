@@ -137,8 +137,6 @@ struct Asteroid {
     // The vertices of the asteroid relative to the center
     Vector vertices[nASTEROID_VERTICES];
 
-    bool alive;
-    
     float radius;
 
     float radius_squared;
@@ -167,7 +165,7 @@ struct Bullet {
         // is the bullet alive
         bool alive;
         //next bullet
-        struct Bullet *next;
+        struct Bullet *next, *prev;
 
 };
 
@@ -178,6 +176,7 @@ void draw_bullets(Bullet*);
 
 //================== G A M E ==================//
 #define FPS 60
+#define dt 1.0/FPS
 Vector CENTER = {RESOLUTION_X/2, RESOLUTION_Y/2};
 Vector SCREEN_SIZE = {RESOLUTION_X, RESOLUTION_Y};
 
@@ -196,18 +195,17 @@ Vector SCREEN_SIZE = {RESOLUTION_X, RESOLUTION_Y};
 
     int state;
 
-    // Vector playerModel[nSHIP_VERTICES];
-
+    // Vector* pModel, aModel;
 } Game;
 
 void init_game(Game*);
 
 void reset_game(Game*);
 
-void reset_ship(Game*);
-
 void update_game(Game*);
 
+
+void reset_ship(Game*);
 
 
 int get_key_pressed();
@@ -284,6 +282,8 @@ const Vector playerModel[] =
     {0, 2},
     {-4, 4}
 };
+
+Vector asteroidModel[nASTEROID_VERTICES];
 
 int main(void)
 {
@@ -410,9 +410,10 @@ void accelerate_ship(Ship* ship) {
 }
 
 void update_ship(Ship *ship) {
-    // consider replacing screen size with gane->size
+    // consider replacing screen size with game->/.size
     ship->position = wrap(SCREEN_SIZE, vec_add(ship->position, ship->velocity));
-    ship->velocity = vec_mul(ship->velocity, (pow(1 - SHIP_FRICTION, 1.0/FPS)));    
+    // add some friction to the ship
+    ship->velocity = vec_mul(ship->velocity, (pow(1 - SHIP_FRICTION, dt)));    
     printf("%f %f\n", ship->velocity.x, ship->velocity.y);
 
 }
@@ -423,7 +424,7 @@ void draw_ship(Ship *ship) {
 }
 
 //================== A S T E R O I D ==================//
-
+// TODO: need to change this to not assign a model and just use the generic model
 Asteroid *new_asteroid(Vector position, Vector velocity, float radius) {
     Asteroid *a = (Asteroid *)malloc(sizeof(Asteroid));
     a->position = position;
@@ -451,7 +452,17 @@ bool point_in_asteroid(Asteroid *asteroid, int num_vertices, Vector p)
     return asteroid->radius_squared >= magnitude_squared(vec_sub(p, asteroid->position));
 }
 
-
+void draw_asteroids(Asteroid* asteroids) {
+    Asteroid *a = asteroids;
+    while (a != NULL) {
+        transform_model(a->vertices, asteroidModel, 
+                        nASTEROID_VERTICES, a->position, 
+                        a->angle, a->radius);
+        draw_model(a->vertices, nASTEROID_VERTICES, WHITE);
+        a = a->next;
+    }
+}
+    
 
 //================== B U L L E T ==================//
 
@@ -463,8 +474,18 @@ bool point_in_asteroid(Asteroid *asteroid, int num_vertices, Vector p)
 void init_game(Game* game) {
     reset_game(game);
 
+    // set the asteroid model
+    int i = 0;
+    for (; i < nASTEROID_VERTICES; i++) {
+        float rad = (float)rand()/RAND_MAX * 0.4 + 0.8;
+        float angle = (float)i * 2 * M_PI / nASTEROID_VERTICES;
+        asteroidModel[i].x = rad * cos(angle);
+        asteroidModel[i].y = rad * sin(angle);
+    }
+
+
     // add asteroids
-    for (int i = 0; i < nASTEROIDS; i++) {
+    for (i = 0; i < nASTEROIDS; i++) {
         float size = (float)rand()/RAND_MAX * (MAX_ASTEROID_RADIUS - MIN_ASTEROID_RADIUS) + MIN_ASTEROID_RADIUS;
         // results in a speed proportional to the asteroids' size
         Vector speed = vec_mul(NORTH, (5 - log(size) / log(2)));    
