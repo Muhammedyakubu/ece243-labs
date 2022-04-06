@@ -434,32 +434,24 @@ Asteroid *new_asteroid(Vector position, Vector velocity, float radius) {
     a->radius_squared = radius * radius;
     a->prev = a->next = NULL;
 
-    // assign vertices
-    int i = 0;
-    for (; i < nASTEROID_VERTICES; i++) {
-        float rad = (float)rand()/RAND_MAX * 0.4 + 0.8;
-        float angle = (float)i * 2 * M_PI / nASTEROID_VERTICES;
-        a->vertices[i].x = rad * cos(angle);
-        a->vertices[i].y = rad * sin(angle);
-    }
-
     return a;
 }
 
 bool point_in_asteroid(Asteroid *asteroid, int num_vertices, Vector p)
 {
     // model asteroid as a circle
-    return asteroid->radius_squared >= magnitude_squared(vec_sub(p, asteroid->position));
+    return (asteroid->radius_squared >= magnitude_squared(vec_sub(p, asteroid->position)));
+
+    // might want to do more precise collision detection later
 }
 
 void draw_asteroids(Asteroid* asteroids) {
     Asteroid *a = asteroids;
-    while (a != NULL) {
+    for (; a != NULL; a = a->next) {
         transform_model(a->vertices, asteroidModel, 
                         nASTEROID_VERTICES, a->position, 
                         a->angle, a->radius);
         draw_model(a->vertices, nASTEROID_VERTICES, WHITE);
-        a = a->next;
     }
 }
     
@@ -520,8 +512,8 @@ void update_game(Game* game) {
 }
 
 void draw_game(Game *game) {
-    draw_asteroids(game->asteroids);
-    // draw_bullets(game->bullets);
+    draw_asteroids(game->asteroidHead);
+    draw_bullets(game->bulletHead);
     draw_ship(&game->player);
 
     /* to be implemented */
