@@ -127,7 +127,9 @@ void draw_ship(Ship *);
 #define MAX_ASTEROID_RADIUS 16
 #define MIN_ASTEROID_RADIUS 4
 #define nASTEROID_VERTICES 8
-#define nASTEROIDS 4
+#define nASTEROIDS 6
+#define ASTEROID_MIN_SPEED 2
+#define ASTEROID_MAX_SPEED 5
 
 struct Asteroid {
     // The position of the asteroid
@@ -223,6 +225,10 @@ void delete_asteroid(Game*, Asteroid*);
 void delete_asteroid_list(Game*);
 // updates the positions of asteroids and does collision detection
 void update_asteroids(Game*);
+
+void split_asteroid(Game* game, Asteroid* a);
+
+bool check_collision(Game* game, Asteroid* a);
 
 
 /* to be implemented (ankur) */
@@ -467,6 +473,8 @@ void draw_asteroids(Asteroid* asteroids) {
 //================== G A M E ==================//
 
 void init_game(Game* game) {
+    game->size = SCREEN_SIZE;
+
     reset_game(game);
 
     // set the asteroid model
@@ -483,7 +491,8 @@ void init_game(Game* game) {
     for (i = 0; i < nASTEROIDS; i++) {
         float size = (float)rand()/RAND_MAX * (MAX_ASTEROID_RADIUS - MIN_ASTEROID_RADIUS) + MIN_ASTEROID_RADIUS;
         // results in a speed proportional to the asteroids' size
-        Vector speed = vec_mul(NORTH, 5 - (log(size) / log(2)));    
+        Vector speed = vec_mul(NORTH, 
+                                ASTEROID_MIN_SPEED * (5 - (log(size) / log(2))));    
         Asteroid *a = new_asteroid(
             rand_vec(game),   // randomize and make sure it is not near the ship
             rotate(speed, (float)rand()/RAND_MAX * 2 * M_PI),
@@ -569,6 +578,15 @@ void insert_asteroid(Game* game, Asteroid* a){
 }
 
 void delete_asteroid(Game* game, Asteroid* a) {
+    {
+        Asteroid *ax = game->asteroidHead;
+        int count = 0;
+        for (; ax != NULL; ax = ax->next) {
+            count++;
+        }
+        printf("num asteroids before delete: %d\n", count);
+    }
+
     if (game->asteroidHead == a)
         game->asteroidHead = a->next;
     if (a->prev)
@@ -576,21 +594,84 @@ void delete_asteroid(Game* game, Asteroid* a) {
     if (a->next)
         a->next->prev = a->prev;
     free(a);
+
+    // print the number of asteroids
+    Asteroid * ax = game->asteroidHead;
+    int count = 0;
+    for (; ax != NULL; ax = ax->next) {
+        count++;
+    }
+    printf("num asteroids after delete: %d\n", count);
+
 }
 
 void update_asteroids(Game* game) {
     Asteroid *a = game->asteroidHead;
     for (; a != NULL; a = a->next) {
         a->position = vec_add(a->position, vec_mul(a->velocity, dt));
-        
-        // for some reason, wrapping doesn't work. fix later
-        // a->position = wrap (game->size, a->position);
+        a->position = wrap(game->size, a->position);
+
+        if (check_collision(game, a)) {
+            if (a->radius > MIN_ASTEROID_RADIUS) 
+                split_asteroid(game, a);
+            else 
+                delete_asteroid(game, a);
+        }
+
         printf("asteroid position: ");
         printf("%f, %f\n", a->position.x, a->position.y);
         printf("asteroid velocity: ");
         printf("%f, %f\n", a->velocity.x, a->velocity.y);
         // a->angle += 0.01;
     }
+}
+
+bool check_collision(Game* game, Asteroid* a) {
+
+    // check collision with each bullet
+    /* Bullet* b = game->bulletHead;
+    for (; b != NULL; b = b->next) {
+        if (point_in_asteroid(a, nASTEROID_VERTICES, b->position)) {
+            // delete bullet
+            delete_bullet(game, b);
+            // update score
+            game->score += 1;
+            return true;
+        }
+    } */
+
+    // check collision with ship
+    int i = 0;
+    for (; i < nSHIP_VERTICES; i++) {
+        if (point_in_asteroid(a, nASTEROID_VERTICES, game->player.vertices[i])) {
+            // update lives
+            game->lives -= 1;
+            // reset ship
+            // may need to change this logic in case the user dies at the center of the screen
+            reset_ship(game);
+            return true;
+        }
+    }
+
+    return false;
+}
+
+void split_asteroid(Game* game, Asteroid* a) {
+    int i = 0;
+    for (; i < 2; i++) {
+        float size = a->radius/2;
+        // results in a speed proportional to the asteroids' size
+        Vector speed = vec_mul(NORTH, 
+                                ASTEROID_MIN_SPEED * (5 - (log(size) / log(2))));
+                                
+        Asteroid *a_new = new_asteroid(
+                a->position,
+                rotate(speed, (float)rand()/RAND_MAX * 2 * M_PI),
+                size
+        );
+        insert_asteroid(game, a_new);
+    }
+    delete_asteroid(game, a);
 }
 
 void delete_asteroid_list(Game* game) {
