@@ -46,14 +46,6 @@
 
 #define PS2_BASE              0xFF200100
 
-/* Constants for animation */
-
-/* not sure these are needed anymore */
-// #define NUM_ASTEROIDS 8 // max number of asteroids on the screen at once
-// #define NUM_BULLETS 8 // max number of bullets on the screen at once
-// #define FALSE 0
-// #define TRUE 1
-
 
 
 /******************************************************************************
@@ -209,6 +201,8 @@ Vector SCREEN_SIZE = {RESOLUTION_X, RESOLUTION_Y};
 void init_game(Game*);
 
 void reset_game(Game*);
+
+void reset_ship(Game*);
 
 void update_game(Game*);
 
@@ -455,6 +449,13 @@ bool point_in_asteroid(Asteroid *asteroid, int num_vertices, Vector p)
     return asteroid->radius_squared >= magnitude_squared(vec_sub(p, asteroid->position));
 }
 
+
+
+//================== B U L L E T ==================//
+
+
+
+
 //================== G A M E ==================//
 
 void init_game(Game* game) {
@@ -475,14 +476,18 @@ void init_game(Game* game) {
 }
 
 void reset_game(Game* game) {
-    game->player.position = vec_mul(game->size, 0.5);
-    game->player.velocity = new_vector();
-    game->player.angle = 0;
+    reset_player(game);
 
     delete_asteroid_list(game);
     // delete_bullet_list(game);
     game->score = 0;
     game->lives = 5;
+}
+
+void reset_ship(Game* game) {
+    game->player.position = vec_mul(game->size, 0.5);
+    game->player.velocity = new_vector();
+    game->player.angle = 0;
 }
 
 void update_game(Game* game) {
