@@ -10,11 +10,12 @@ Bullet *new_bullet(Vector position, float angle){
 
 
 void insert_bullet(Game* game, Bullet* b){
-    if(game->bulletHead == NULL){game->bulletHead = b;}
-    else{
-        b->next = game->bulletHead;
-        game->bulletHead = b;
-    }
+    b->next = game->bulletHead;
+
+    if(game->bulletHead != NULL)
+        game->bulletHead->prev = b;
+
+    game->bulletHead = b;
 }
 
 //deletes a bullet
