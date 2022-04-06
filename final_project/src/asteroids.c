@@ -253,7 +253,7 @@ int main(void)
     int key_pressed = KEY_NONE;
 
     init_game(&game);
-    game.player = {
+    Ship player = {
         .position = CENTER,
         .velocity = {0, 0},
         .angle = 0
@@ -285,7 +285,7 @@ int main(void)
         }
         else if (key_pressed == KEY_UP)
         {
-            player.velocity = vec_add(player.velocity, rotate(ACCELERATE, player.angle));
+            player.velocity = vec_add(player.velocity, rotate(NORTH, player.angle));
             printf("%f %f\n", player.velocity.x, player.velocity.y);
         }
         else if (key_pressed == KEY_SPACE)
@@ -373,7 +373,7 @@ void rotate_ship_right(Ship *ship) {
 
 //================== A S T E R O I D ==================//
 
-Asteroid new_asteroid(Vector position, Vector velocity, float angle, float radius) {
+/* Asteroid new_asteroid(Vector position, Vector velocity, float angle, float radius) {
     Asteroid a = {
         .position = position,
         .velocity = velocity,
@@ -392,7 +392,7 @@ Asteroid new_asteroid(Vector position, Vector velocity, float angle, float radiu
     }
 
     return a;
-}
+} */
 
 bool point_in_asteroid(Asteroid *asteroid, int num_vertices, Vector p)
 {
