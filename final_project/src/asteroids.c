@@ -125,10 +125,10 @@ void draw_ship(Ship *);
 
 // starting radius of asteroid in pixels
 #define MAX_ASTEROID_RADIUS 32
-#define MIN_ASTEROID_RADIUS 4
+#define MIN_ASTEROID_RADIUS 8
 #define nASTEROID_VERTICES 8
-#define nASTEROIDS 6
-#define ASTEROID_MIN_SPEED 2
+#define nASTEROIDS 8
+#define ASTEROID_MIN_SPEED 4
 #define ASTEROID_MAX_SPEED 5
 
 struct Asteroid {
@@ -182,6 +182,8 @@ void draw_bullets(Bullet*);
 #define FPS 60
 // #define dt 1.0/FPS
 #define dt 1.0
+#define COLLISION_BULLET 1
+#define COLLISION_SHIP 2
 Vector CENTER = {RESOLUTION_X/2, RESOLUTION_Y/2};
 Vector SCREEN_SIZE = {RESOLUTION_X, RESOLUTION_Y};
 
@@ -228,7 +230,7 @@ void update_asteroids(Game*);
 
 void split_asteroid(Game* game, Asteroid* a);
 
-bool check_collision(Game* game, Asteroid* a);
+int check_collision(Game* game, Asteroid* a);
 
 
 /* to be implemented (ankur) */
@@ -430,7 +432,7 @@ void update_ship(Ship *ship) {
 }
 
 void draw_ship(Ship *ship) {
-    transform_model(ship->vertices, playerModel, nSHIP_VERTICES, ship->position, ship->angle, 2);
+    transform_model(ship->vertices, playerModel, nSHIP_VERTICES, ship->position, ship->angle, 1.5);
     draw_model(ship->vertices, nSHIP_VERTICES, WHITE);
 }
 
@@ -595,7 +597,7 @@ void delete_asteroid(Game* game, Asteroid* a) {
         a->prev->next = a->next;
     if (a->next)
         a->next->prev = a->prev;
-    free(a);
+    // free(a);
 }
 
 void update_asteroids(Game* game) {
@@ -604,11 +606,13 @@ void update_asteroids(Game* game) {
         a->position = vec_add(a->position, vec_mul(a->velocity, dt));
         a->position = wrap(game->size, a->position);
 
-        if (check_collision(game, a)) {
-            if (a->radius > MIN_ASTEROID_RADIUS) 
-                split_asteroid(game, a);
-            else 
-                delete_asteroid(game, a);
+        int collision = check_collision(game, a);
+        if (collision) {
+            split_asteroid(game, a);
+            // if (a->radius > MIN_ASTEROID_RADIUS && collision == COLLISION_BULLET) 
+            //     split_asteroid(game, a);
+            // else 
+            //     delete_asteroid(game, a);
         }
 
         // printf("asteroid position: ");
@@ -619,7 +623,7 @@ void update_asteroids(Game* game) {
     }
 }
 
-bool check_collision(Game* game, Asteroid* a) {
+int check_collision(Game* game, Asteroid* a) {
 
     // check collision with each bullet
     /* Bullet* b = game->bulletHead;
@@ -629,7 +633,7 @@ bool check_collision(Game* game, Asteroid* a) {
             delete_bullet(game, b);
             // update score
             game->score += 1;
-            return true;
+            return 1;
         }
     } */
 
@@ -642,11 +646,11 @@ bool check_collision(Game* game, Asteroid* a) {
             // reset ship
             // may need to change this logic in case the user dies at the center of the screen
             reset_ship(game);
-            return true;
+            return 2;
         }
     }
 
-    return false;
+    return 0;
 }
 
 void split_asteroid(Game* game, Asteroid* a) {
