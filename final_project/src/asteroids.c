@@ -93,7 +93,9 @@ Vector rotate(Vector, float);
 
 #define SHIP_ROTATION_SPEED M_PI/12 // fine tune later
 #define nSHIP_VERTICES 4
-#define SHIP_FRICTION 0.5
+#define SHIP_FRICTION 0.2
+// #define SHIP_ACCELERATION 0.5
+#define SHIP_MAX_SPEED 10   // fine tune later
 
 typedef struct Ship {
     // The position of the ship
@@ -176,7 +178,8 @@ void draw_bullets(Bullet*);
 
 //================== G A M E ==================//
 #define FPS 60
-#define dt 1.0/FPS
+// #define dt 1.0/FPS
+#define dt 1.0
 Vector CENTER = {RESOLUTION_X/2, RESOLUTION_Y/2};
 Vector SCREEN_SIZE = {RESOLUTION_X, RESOLUTION_Y};
 
@@ -403,10 +406,10 @@ void rotate_ship_right(Ship *ship) {
 }
 
 void accelerate_ship(Ship* ship) {
-    ship->velocity = vec_add(ship->velocity, rotate(NORTH, ship->angle));
+    ship->velocity = vec_add(ship->velocity, 
+                            vec_mul(rotate(NORTH, ship->angle), dt)
+                            );
     printf("%f %f\n", ship->velocity.x, ship->velocity.y);
-
-    // ship->velocity = vec_add(ship->velocity, vec_mul(ship->acceleration, dt));
 }
 
 void update_ship(Ship *ship) {
@@ -513,7 +516,7 @@ void update_game(Game* game) {
 
 void draw_game(Game *game) {
     draw_asteroids(game->asteroidHead);
-    draw_bullets(game->bulletHead);
+    // draw_bullets(game->bulletHead);
     draw_ship(&game->player);
 
     /* to be implemented */
