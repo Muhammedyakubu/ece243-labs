@@ -93,8 +93,8 @@ Vector rotate(Vector, float);
 
 #define SHIP_ROTATION_SPEED M_PI/12 // fine tune later
 #define nSHIP_VERTICES 4
-#define SHIP_FRICTION 0.2
-#define SHIP_ACCELERATION 3
+#define SHIP_FRICTION 0.0
+#define SHIP_ACCELERATION 5
 #define SHIP_MAX_SPEED 10   // fine tune later
 
 typedef struct Ship {
@@ -124,7 +124,7 @@ void draw_ship(Ship *);
 //================== A S T E R O I D ==================//
 
 // starting radius of asteroid in pixels
-#define MAX_ASTEROID_RADIUS 16
+#define MAX_ASTEROID_RADIUS 32
 #define MIN_ASTEROID_RADIUS 4
 #define nASTEROID_VERTICES 8
 #define nASTEROIDS 6
@@ -185,7 +185,7 @@ void draw_bullets(Bullet*);
 Vector CENTER = {RESOLUTION_X/2, RESOLUTION_Y/2};
 Vector SCREEN_SIZE = {RESOLUTION_X, RESOLUTION_Y};
 
- typedef struct Game {
+typedef struct Game {
     Vector size;
 
     Ship player;
@@ -245,6 +245,7 @@ void draw_game(Game*);
 
 //================== R E N D E R I N G   &   G R A P H I C S ==================//
 
+void swap_buffers();
 void wait_for_vsync();
 void clear_screen();
 
@@ -329,6 +330,7 @@ int main(void)
         // draw all objects
 
         draw_game(&game);
+        swap_buffers();
 
         // update all objects
 
@@ -415,7 +417,7 @@ void accelerate_ship(Ship* ship) {
     ship->velocity = vec_add(ship->velocity, 
                             vec_mul(rotate(NORTH, ship->angle), 
                                     SHIP_ACCELERATION * dt));
-    printf("%f %f\n", ship->velocity.x, ship->velocity.y);
+    // printf("%f %f\n", ship->velocity.x, ship->velocity.y);
 }
 
 void update_ship(Ship *ship) {
@@ -423,7 +425,7 @@ void update_ship(Ship *ship) {
     ship->position = wrap(SCREEN_SIZE, vec_add(ship->position, ship->velocity));
     // add some friction to the ship
     ship->velocity = vec_mul(ship->velocity, (pow(1 - SHIP_FRICTION, dt)));    
-    printf("%f %f\n", ship->velocity.x, ship->velocity.y);
+    // printf("%f %f\n", ship->velocity.x, ship->velocity.y);
 
 }
 
@@ -577,16 +579,16 @@ void insert_asteroid(Game* game, Asteroid* a){
     game->asteroidHead = a;
 }
 
-void delete_asteroid(Game* game, Asteroid* a) {
-    {
-        Asteroid *ax = game->asteroidHead;
-        int count = 0;
-        for (; ax != NULL; ax = ax->next) {
-            count++;
-        }
-        printf("num asteroids before delete: %d\n", count);
+void count_asteroids (Game* game) {
+    int count = 0;
+    Asteroid *a = game->asteroidHead;
+    for (; a != NULL; a = a->next) {
+        count++;
     }
+    printf("num asteroids: %d\n", count);
+}
 
+void delete_asteroid(Game* game, Asteroid* a) {
     if (game->asteroidHead == a)
         game->asteroidHead = a->next;
     if (a->prev)
@@ -594,15 +596,6 @@ void delete_asteroid(Game* game, Asteroid* a) {
     if (a->next)
         a->next->prev = a->prev;
     free(a);
-
-    // print the number of asteroids
-    Asteroid * ax = game->asteroidHead;
-    int count = 0;
-    for (; ax != NULL; ax = ax->next) {
-        count++;
-    }
-    printf("num asteroids after delete: %d\n", count);
-
 }
 
 void update_asteroids(Game* game) {
@@ -618,10 +611,10 @@ void update_asteroids(Game* game) {
                 delete_asteroid(game, a);
         }
 
-        printf("asteroid position: ");
-        printf("%f, %f\n", a->position.x, a->position.y);
-        printf("asteroid velocity: ");
-        printf("%f, %f\n", a->velocity.x, a->velocity.y);
+        // printf("asteroid position: ");
+        // printf("%f, %f\n", a->position.x, a->position.y);
+        // printf("asteroid velocity: ");
+        // printf("%f, %f\n", a->velocity.x, a->velocity.y);
         // a->angle += 0.01;
     }
 }
@@ -686,10 +679,15 @@ void delete_asteroid_list(Game* game) {
 
 //================== R E N D E R I N G   &   G R A P H I C S ==================//
 
+void swap_buffers() {
+    volatile int * pixel_ctrl_ptr = (int *)0xFF203020;
+    *pixel_ctrl_ptr = 1;
+}
+
 void wait_for_vsync()
 {
     volatile int * pixel_ctrl_ptr = (int *)0xFF203020;
-    *pixel_ctrl_ptr = 1;
+    // *pixel_ctrl_ptr = 1;
 
     while (*(pixel_ctrl_ptr + 3) & 1); // wait until S bit is 0
 }
@@ -824,6 +822,6 @@ Vector rand_vec(Game *game)
     {
         p.y = rand() % RESOLUTION_Y;
     }
-    printf("rand_vec: %f, %f\n", p.x, p.y);
+    // printf("rand_vec: %f, %f\n", p.x, p.y);
     return p;
 }
