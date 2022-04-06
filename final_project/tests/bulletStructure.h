@@ -15,6 +15,6 @@ struct Bullet {
 
 } Bullet;
 
-typedef struct Bullet *bullet; //Define bullet as pointer of data type struct BulletRepository
+//typedef struct Bullet *bullet; //Define bullet as pointer of data type struct BulletRepository
 
 #endif //FINAL_PROJECT_BULLETSTRUCTURE_H

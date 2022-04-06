@@ -136,6 +136,8 @@ struct Asteroid {
     float angle;
     // The vertices of the asteroid relative to the center
     Vector vertices[nASTEROID_VERTICES];
+
+    bool alive;
     
     float radius;
 
@@ -184,9 +186,9 @@ Vector SCREEN_SIZE = {RESOLUTION_X, RESOLUTION_Y};
 
     Ship player;
 
-    Asteroid *asteroids;
+    Asteroid *asteroidHead;
 
-    Bullet *bullets;
+    Bullet *bulletHead;
 
     int score;
 
