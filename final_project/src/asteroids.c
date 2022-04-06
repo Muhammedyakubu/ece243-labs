@@ -234,6 +234,8 @@ int check_collision(Game* game, Asteroid* a);
 
 
 /* to be implemented (ankur) */
+// Bullet *new_bullet(Vector p, float angle);
+
 // void insert_bullet(Game*, Bullet*);
 
 // void delete_bullet(Game*, Bullet*);
@@ -302,9 +304,6 @@ int main(void)
     //================== S E T U P ==================//
     
     volatile int * pixel_ctrl_ptr = (int *)0xFF203020;
-    // declare other variables(not shown)
-    // initialize location and direction of rectangles(not shown)
-    // init();
 
     /* set front pixel buffer to start of FPGA On-chip memory */
     *(pixel_ctrl_ptr + 1) = 0xC8000000; // first store the address in the 
@@ -318,6 +317,7 @@ int main(void)
     *(pixel_ctrl_ptr + 1) = 0xC0000000;
     pixel_buffer_start = *(pixel_ctrl_ptr + 1); // we draw on the back buffer
     clear_screen(); // pixel_buffer_start points to the pixel buffer
+
 
     //================== M A I N   L O O P ==================//
 
@@ -575,7 +575,7 @@ void handle_key_press(Game* game, int key_pressed) {
 }
 
 void insert_asteroid(Game* game, Asteroid* a){
-    if (game->asteroidHead) 
+    if(game->asteroidHead) 
         game->asteroidHead->prev = a;
     a->next = game->asteroidHead;
     game->asteroidHead = a;
