@@ -94,7 +94,7 @@ Vector rotate(Vector, float);
 #define SHIP_ROTATION_SPEED M_PI/12 // fine tune later
 #define nSHIP_VERTICES 4
 #define SHIP_FRICTION 0.2
-// #define SHIP_ACCELERATION 0.5
+#define SHIP_ACCELERATION 3
 #define SHIP_MAX_SPEED 10   // fine tune later
 
 typedef struct Ship {
@@ -407,8 +407,8 @@ void rotate_ship_right(Ship *ship) {
 
 void accelerate_ship(Ship* ship) {
     ship->velocity = vec_add(ship->velocity, 
-                            vec_mul(rotate(NORTH, ship->angle), dt)
-                            );
+                            vec_mul(rotate(NORTH, ship->angle), 
+                                    SHIP_ACCELERATION * dt));
     printf("%f %f\n", ship->velocity.x, ship->velocity.y);
 }
 
@@ -581,8 +581,9 @@ void delete_asteroid(Game* game, Asteroid* a) {
 void update_asteroids(Game* game) {
     Asteroid *a = game->asteroidHead;
     for (; a != NULL; a = a->next) {
-        a->position = vec_add(a->position,
-                                vec_mul(a->velocity, dt));
+        a->position = wrap (game->size, 
+                            vec_add(a->position, vec_mul(a->velocity, dt))
+                            );
 
         // a->angle += 0.01;
     }
