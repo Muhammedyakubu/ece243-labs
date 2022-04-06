@@ -120,12 +120,20 @@ void rotate_ship_left(Ship*);
 // Rotates the ship right
 void rotate_ship_right(Ship*);
 
+void accelerate_ship(Ship*);
+// updates the position and velocity of the ship
+void update_ship(Ship *);
+
+void draw_ship(Ship *);
+
+
 //================== A S T E R O I D ==================//
 
 // starting radius of asteroid in pixels
 #define MAX_ASTEROID_RADIUS 16
 #define MIN_ASTEROID_RADIUS 4
 #define nASTEROID_VERTICES 8
+#define nASTEROIDS 8
 
 struct Asteroid {
     // The position of the asteroid
@@ -146,11 +154,32 @@ struct Asteroid {
 typedef struct Asteroid Asteroid;
 
 
-void insert_asteroid(Asteroid*);
+Asteroid *new_asteroid(Vector p, Vector v, float r);
 
-void delete_asteroid(Asteroid*);
+bool point_in_asteroid(Asteroid*, int, Vector);
 
-bool point_in_asteroid(Asteroid *asteroid, int num_vertices, Vector p);
+void draw_asteroids(Asteroid*);
+
+
+//================== B U L L E T ==================//
+
+struct Bullet {
+        // The original position of the bullet
+        Vector position;
+        // The velocity of the bullet
+        Vector velocity;
+        // The angle the bullet is pointing at
+        float angle;
+        // is the bullet alive
+        bool alive;
+        //next bullet
+        struct Bullet *next;
+
+};
+
+typedef struct Bullet Bullet;
+
+void draw_bullets(Bullet*);
 
 
 //================== G A M E ==================//
@@ -159,13 +188,13 @@ Vector CENTER = {RESOLUTION_X/2, RESOLUTION_Y/2};
 Vector SCREEN_SIZE = {RESOLUTION_X, RESOLUTION_Y};
 
  typedef struct Game {
-    Vector SIZE;
+    Vector size;
 
     Ship player;
 
     Asteroid *asteroids;
 
-    // Bullet *bullets;
+    Bullet *bullets;
 
     int score;
 
@@ -173,13 +202,43 @@ Vector SCREEN_SIZE = {RESOLUTION_X, RESOLUTION_Y};
 
     int state;
 
+    // Vector playerModel[nSHIP_VERTICES];
+
 } Game;
 
 void init_game(Game*);
 
-void update_ship(Ship *ship);
+void reset_game(Game*);
+
+void update_game(Game*);
+
+
 
 int get_key_pressed();
+
+void handle_key_press(Game*, int);
+
+
+void insert_asteroid(Game*, Asteroid*);
+
+void delete_asteroid(Game*, Asteroid*);
+
+void delete_asteroid_list(Game*);
+// updates the positions of asteroids and does collision detection
+void update_asteroids(Game*);
+
+
+/* to be implemented (ankur) */
+// void insert_bullet(Game*, Bullet*);
+
+// void delete_bullet(Game*, Bullet*);
+
+// void delete_bullet_list(Game*);
+
+// void update_bullets(Game*);
+
+void draw_game(Game*);
+
 
 //================== R E N D E R I N G   &   G R A P H I C S ==================//
 
@@ -203,6 +262,8 @@ void draw_model(Vector *model, int num_vertices, short int color);
 void swap(int * a, int * b);
 
 bool point_on_screen(Vector p);
+// returns a reandom position outside a 32 pixel radius from the player
+Vector rand_vec(Game *game);
 
 
 /******************************************************************************
@@ -213,8 +274,13 @@ bool point_on_screen(Vector p);
 
 volatile int pixel_buffer_start; // global variable
 
+Game game;
+
+const Vector NORTH = {0, -1};
+
+
 //================== M O D E L S ==================//
-/* consider storing the models inside the game object */
+
 const Vector playerModel[] = 
 {
     {0, -6},
@@ -222,9 +288,6 @@ const Vector playerModel[] =
     {0, 2},
     {-4, 4}
 };
-
-Game game;
-
 
 int main(void)
 {
@@ -253,21 +316,14 @@ int main(void)
     int key_pressed = KEY_NONE;
 
     init_game(&game);
-    game.player = {
-        .position = CENTER,
-        .velocity = {0, 0},
-        .angle = 0
-    };
-    Vector NORTH = {0, -5};
 
     while (1)
     {   
         clear_screen();
 
         // draw all objects
-        
-        transform_model(player.vertices, playerModel, nSHIP_VERTICES, player.position, player.angle, 2);
-        draw_model(player.vertices, nSHIP_VERTICES, WHITE);
+
+        draw_game(&game);
 
         // update all objects
 
@@ -275,29 +331,9 @@ int main(void)
         key_pressed = get_key_pressed();
         // printf("%d\n", key_pressed);  
 
-        if (key_pressed == KEY_RIGHT)
-        {
-            rotate_ship_right(&player);
-        }
-        else if (key_pressed == KEY_LEFT)
-        {
-            rotate_ship_left(&player);
-        }
-        else if (key_pressed == KEY_UP)
-        {
-            player.velocity = vec_add(player.velocity, rotate(ACCELERATE, player.angle));
-            printf("%f %f\n", player.velocity.x, player.velocity.y);
-        }
-        else if (key_pressed == KEY_SPACE)
-        {
-            // shoot bullet
-        }
+        handle_key_press(&game, key_pressed);
 
-        update_ship(&player);
-        printf("%f %f\n", player.velocity.x, player.velocity.y);
-
-        // update_locations();
-
+        update_game(&game);
 
         wait_for_vsync(); // swap front and back buffers on VGA vertical sync
         pixel_buffer_start = *(pixel_ctrl_ptr + 1); // new back buffer
@@ -370,25 +406,44 @@ void rotate_ship_right(Ship *ship) {
     ship->angle += SHIP_ROTATION_SPEED;
 }
 
+void accelerate_ship(Ship* ship) {
+    ship->velocity = vec_add(ship->velocity, rotate(NORTH, ship->angle));
+    printf("%f %f\n", ship->velocity.x, ship->velocity.y);
+
+    // ship->velocity = vec_add(ship->velocity, vec_mul(ship->acceleration, dt));
+}
+
+void update_ship(Ship *ship) {
+    // consider replacing screen size with gane->size
+    ship->position = wrap(SCREEN_SIZE, vec_add(ship->position, ship->velocity));
+    ship->velocity = vec_mul(ship->velocity, (pow(1 - SHIP_FRICTION, 1.0/FPS)));    
+    printf("%f %f\n", ship->velocity.x, ship->velocity.y);
+
+}
+
+void draw_ship(Ship *ship) {
+    transform_model(ship->vertices, playerModel, nSHIP_VERTICES, ship->position, ship->angle, 2);
+    draw_model(ship->vertices, nSHIP_VERTICES, WHITE);
+}
 
 //================== A S T E R O I D ==================//
 
-Asteroid new_asteroid(Vector position, Vector velocity, float angle, float radius) {
-    Asteroid a = {
-        .position = position,
-        .velocity = velocity,
-        .angle = angle,
-        .radius = radius,
-        .radius_squared = radius * radius,
-        .prev = .next = NULL
-    };
+Asteroid *new_asteroid(Vector position, Vector velocity, float radius) {
+    Asteroid *a = (Asteroid *)malloc(sizeof(Asteroid));
+    a->position = position;
+    a->velocity = velocity;
+    a->angle = 0;
+    a->radius = radius;
+    a->radius_squared = radius * radius;
+    a->prev = a->next = NULL;
 
     // assign vertices
     int i = 0;
     for (; i < nASTEROID_VERTICES; i++) {
         float rad = (float)rand()/RAND_MAX * 0.4 + 0.8;
         float angle = (float)i * 2 * M_PI / nASTEROID_VERTICES;
-        a.vertices[i] = {rad * cos(angle), rad * sin(angle)};
+        a->vertices[i].x = rad * cos(angle);
+        a->vertices[i].y = rad * sin(angle);
     }
 
     return a;
@@ -403,15 +458,47 @@ bool point_in_asteroid(Asteroid *asteroid, int num_vertices, Vector p)
 //================== G A M E ==================//
 
 void init_game(Game* game) {
+    reset_game(game);
 
+    // add asteroids
+    for (int i = 0; i < nASTEROIDS; i++) {
+        float size = (float)rand()/RAND_MAX * (MAX_ASTEROID_RADIUS - MIN_ASTEROID_RADIUS) + MIN_ASTEROID_RADIUS;
+        // results in a speed proportional to the asteroids' size
+        Vector speed = vec_mul(NORTH, (5 - log(size) / log(2)));    
+        Asteroid *a = new_asteroid(
+            rand_vec(game),   // randomize and make sure it is not near the ship
+            rotate(speed, (float)rand()/RAND_MAX * 2 * M_PI),
+            size
+        );
+        insert_asteroid(game, a);
+    }
 }
 
-void update_ship(Ship *ship) {
-    ship->position = vec_add(ship->position, ship->velocity);
-    ship->position = wrap(SCREEN_SIZE, ship->position);
-    ship->velocity = vec_mul(ship->velocity,
-                                  (pow(1 - SHIP_FRICTION, 1.0/FPS)));    
-    
+void reset_game(Game* game) {
+    game->player.position = vec_mul(game->size, 0.5);
+    game->player.velocity = new_vector();
+    game->player.angle = 0;
+
+    delete_asteroid_list(game);
+    // delete_bullet_list(game);
+    game->score = 0;
+    game->lives = 5;
+}
+
+void update_game(Game* game) {
+    update_asteroids(game);
+    // update_bullets(game);
+    update_ship(&game->player);
+}
+
+void draw_game(Game *game) {
+    draw_asteroids(game->asteroids);
+    // draw_bullets(game->bullets);
+    draw_ship(&game->player);
+
+    /* to be implemented */
+    // draw_score(game->score);
+    // draw_lives(game->lives);
 }
 
 int get_key_pressed() {
@@ -432,6 +519,24 @@ int get_key_pressed() {
     else return KEY_NONE;
 }
 
+void handle_key_press(Game* game, int key_pressed) {
+    if (key_pressed == KEY_RIGHT)
+    {
+        rotate_ship_right(&game->player);
+    }
+    else if (key_pressed == KEY_LEFT)
+    {
+        rotate_ship_left(&game->player);
+    }
+    else if (key_pressed == KEY_UP)
+    {
+        accelerate_ship(&game->player);
+    }
+    else if (key_pressed == KEY_SPACE)
+    {
+        // shoot bullet
+    }
+}
 
 //================== R E N D E R I N G   &   G R A P H I C S ==================//
 
@@ -557,4 +662,21 @@ void swap(int * a, int * b)
 bool point_on_screen(Vector p)
 {
     return p.x >= 0 && p.x < RESOLUTION_X && p.y >= 0 && p.y < RESOLUTION_Y;
+}
+
+Vector rand_vec(Game *game)
+{
+    int radius = 2 * MAX_ASTEROID_RADIUS;
+    Vector p;
+    p.x = rand() % RESOLUTION_X;
+    while (p.x <= radius + game->player.position.x && p.x >= game->player.position.x - radius)
+    {
+        p.x = rand() % RESOLUTION_X;
+    }
+    p.y = rand() % RESOLUTION_Y;
+    while (p.y <= radius + game->player.position.y && p.y >= game->player.position.y - radius)
+    {
+        p.y = rand() % RESOLUTION_Y;
+    }
+    return p;
 }
