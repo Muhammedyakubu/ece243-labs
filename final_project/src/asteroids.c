@@ -125,7 +125,7 @@ void draw_ship(Ship *);
 #define MAX_ASTEROID_RADIUS 16
 #define MIN_ASTEROID_RADIUS 4
 #define nASTEROID_VERTICES 8
-#define nASTEROIDS 8
+#define nASTEROIDS 4
 
 struct Asteroid {
     // The position of the asteroid
@@ -556,6 +556,23 @@ void handle_key_press(Game* game, int key_pressed) {
     {
         // shoot bullet
     }
+}
+
+void insert_asteroid(Game* game, Asteroid* a){
+    if (game->asteroidHead) 
+        game->asteroidHead->prev = a;
+    a->next = game->asteroidHead;
+    game->asteroidHead = a;
+}
+
+void delete_asteroid(Game* game, Asteroid* a) {
+    if (game->asteroidHead == a)
+        game->asteroidHead = a->next;
+    if (a->prev)
+        a->prev->next = a->next;
+    if (a->next)
+        a->next->prev = a->prev;
+    free(a);
 }
 
 //================== R E N D E R I N G   &   G R A P H I C S ==================//
