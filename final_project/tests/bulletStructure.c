@@ -20,18 +20,12 @@ void insert_bullet(Game* game, Bullet* b){
 
 //deletes a bullet
 void delete_bullet(Game* game, Bullet* b) {
-    Bullet* b1 = game->bulletHead;
-    if (head == NULL) {return;}
-    while (b1->next != NULL) {
-        if (b1 == b) {
-            if (b->prev == NULL) {
-                game->bulletHead = b->next;
-            }
-            else {
-                b->prev->next = b->next;
-            }
-            free(b);
-        }
-    }
+    if (game->bulletHead == b)
+        game->bulletHead = b->next;
+    if (b->prev)
+        b->prev->next = b->next;
+    if (b->next)
+        b->next->prev = b->prev;
+    free(b);
 }
 
