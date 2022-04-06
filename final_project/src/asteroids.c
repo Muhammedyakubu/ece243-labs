@@ -106,6 +106,8 @@ typedef struct Ship {
     float angle;
     // The vertices of the ship
     Vector vertices[nSHIP_VERTICES];
+
+    Vector old_vertices[nSHIP_VERTICES];
 } Ship;
 
 
@@ -127,8 +129,8 @@ void draw_ship(Ship *);
 #define MAX_ASTEROID_RADIUS 32
 #define MIN_ASTEROID_RADIUS 8
 #define nASTEROID_VERTICES 8
-#define nASTEROIDS 8
-#define ASTEROID_MIN_SPEED 4
+#define nASTEROIDS 4
+#define ASTEROID_MIN_SPEED 2
 #define ASTEROID_MAX_SPEED 5
 
 struct Asteroid {
@@ -140,6 +142,8 @@ struct Asteroid {
     float angle;
     // The vertices of the asteroid relative to the center
     Vector vertices[nASTEROID_VERTICES];
+
+    Vector old_vertices[nASTEROID_VERTICES];
 
     float radius;
 
@@ -252,6 +256,7 @@ void draw_game(Game*);
 void swap_buffers();
 void wait_for_vsync();
 void clear_screen();
+void clear_screen_fast(Game*);
 
 void plot_pixel(int x, int y, short int line_color);
 void vec_plot_pixel(Vector v, short int line_color);
@@ -327,12 +332,13 @@ int main(void)
 
     while (1)
     {   
-        clear_screen();
+        // clear_screen();
+        clear_screen_fast(&game);
 
         // draw all objects
 
         draw_game(&game);
-        swap_buffers();
+        // swap_buffers();
 
         // update all objects
 
@@ -691,7 +697,7 @@ void swap_buffers() {
 void wait_for_vsync()
 {
     volatile int * pixel_ctrl_ptr = (int *)0xFF203020;
-    // *pixel_ctrl_ptr = 1;
+    *pixel_ctrl_ptr = 1;
 
     while (*(pixel_ctrl_ptr + 3) & 1); // wait until S bit is 0
 }
@@ -767,6 +773,46 @@ void clear_screen()
         draw_line(x0, y, x1, y, BLACK);
     }
 }
+
+///////////////////////////////EXPERIMENTAL///////////////////////////////////
+
+void copy_olds(Game* game) {
+    Asteroid *a = game->asteroidHead;
+    for (; a != NULL; a = a->next) {
+        for (int i = 0; i < nASTEROID_VERTICES; i++) {
+            a->old_vertices[i] = a->vertices[i];
+        }
+    }
+
+    int i = 0;
+    for (; i < nSHIP_VERTICES; i++) {
+        game->player.old_vertices[i] = game->player.vertices[i];
+    }
+
+}
+
+void clear_player(Ship* ship) {
+    draw_model(ship->old_vertices, nSHIP_VERTICES, BLACK);
+}
+
+void clear_asteroid(Asteroid* a) {
+    draw_model(a->old_vertices, nASTEROID_VERTICES, BLACK);
+}
+
+void clear_asteroids(Asteroid *a) {
+    while (a != NULL) {
+        clear_asteroid(a);
+        a = a->next;
+    }
+}
+
+void clear_screen_fast(Game * g) {
+    clear_asteroids(g->asteroidHead);
+    clear_player(&g->player);
+    copy_olds(g);
+}
+
+///////////////////////////////EXPERIMENTAL///////////////////////////////////
 
 void transform_model(Vector *trans, const Vector *model, int num_vertices, Vector t, float a, float sf)
 {
