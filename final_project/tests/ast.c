@@ -1,5 +1,4 @@
 #include "./ast.h"
-
 void update_asteroids(Game* game) {
     Asteroid *ahead = game->asteroidHead;
     Asteroid *a = ahead;
@@ -27,7 +26,7 @@ void check_collision(Game* game, Asteroid* a) {
             for (i; i < nSHIP_VERTICES; i++) {
                 if (point_in_asteroid(a, nASTEROID_VERTICES, game->player.vertices[i])) {
                     game.lives--;
-                    reset_ship(&game->player);
+                    reset_ship(game);
                 }
             }
         }

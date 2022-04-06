@@ -6,15 +6,14 @@ struct Bullet {
         Vector position;
         // The velocity of the bullet
         Vector velocity;
-        // The angle the bullet is pointing at
-        float angle;
         // is the bullet alive
         bool alive;
         //next bullet
-        struct Bullet *next;
+        struct Bullet *prev, *next;
 
-} Bullet;
+};
 
-//typedef struct Bullet *bullet; //Define bullet as pointer of data type struct BulletRepository
+typedef struct Bullet Bullet;
+
 
 #endif //FINAL_PROJECT_BULLETSTRUCTURE_H
