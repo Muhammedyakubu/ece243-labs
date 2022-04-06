@@ -99,8 +99,9 @@ Vector rotate(Vector, float);
 
 //================== S P A C E S H I P ==================//
 
-#define SHIP_ROTATION_SPEED M_PI/16 // fine tune later
+#define SHIP_ROTATION_SPEED M_PI/12 // fine tune later
 #define nSHIP_VERTICES 4
+#define SHIP_FRICTION 0.5
 
 typedef struct Ship {
     // The position of the ship
@@ -122,17 +123,63 @@ void rotate_ship_right(Ship*);
 //================== A S T E R O I D ==================//
 
 // starting radius of asteroid in pixels
-#define ASTEROID_SIZE 4 
+#define MAX_ASTEROID_RADIUS 16
+#define MIN_ASTEROID_RADIUS 4
+#define nASTEROID_VERTICES 8
+
+struct Asteroid {
+    // The position of the asteroid
+    Vector position;
+    // The velocity of the asteroid
+    Vector velocity;
+    // The angle the asteroid is pointing in radians
+    float angle;
+    // The vertices of the asteroid relative to the center
+    Vector vertices[nASTEROID_VERTICES];
+    
+    float radius;
+
+    float radius_squared;
+
+    struct Asteroid *prev, *next;
+};
+typedef struct Asteroid Asteroid;
+
+
+void insert_asteroid(Asteroid*);
+
+void delete_asteroid(Asteroid*);
+
+bool point_in_asteroid(Asteroid *asteroid, int num_vertices, Vector p);
 
 
 //================== G A M E ==================//
- 
+#define FPS 60
 Vector CENTER = {RESOLUTION_X/2, RESOLUTION_Y/2};
+Vector SCREEN_SIZE = {RESOLUTION_X, RESOLUTION_Y};
 
  typedef struct Game {
+    Vector SIZE;
 
- } Game;
+    Ship player;
 
+    Asteroid *asteroids;
+
+    // Bullet *bullets;
+
+    int score;
+
+    int lives;
+
+    int state;
+
+} Game;
+
+void init_game(Game*);
+
+void update_ship(Ship *ship);
+
+int get_key_pressed();
 
 //================== R E N D E R I N G   &   G R A P H I C S ==================//
 
@@ -155,6 +202,7 @@ void draw_model(Vector *model, int num_vertices, short int color);
 
 void swap(int * a, int * b);
 
+bool point_on_screen(Vector p);
 
 
 /******************************************************************************
@@ -167,13 +215,15 @@ volatile int pixel_buffer_start; // global variable
 
 //================== M O D E L S ==================//
 /* consider storing the models inside the game object */
-Vector playerModel[] = 
+const Vector playerModel[] = 
 {
     {0, -6},
     {4, 4},
     {0, 2},
     {-4, 4}
 };
+
+Game game;
 
 
 int main(void)
@@ -200,26 +250,30 @@ int main(void)
 
     //================== M A I N   L O O P ==================//
 
-    volatile int* ps2_data = (int*)PS2_BASE;
     int key_pressed = KEY_NONE;
 
-    Ship player = {
+    init_game(&game);
+    game.player = {
         .position = CENTER,
         .velocity = {0, 0},
         .angle = 0
     };
+    Vector NORTH = {0, -5};
 
     while (1)
     {   
         clear_screen();
+
+        // draw all objects
         
         transform_model(player.vertices, playerModel, nSHIP_VERTICES, player.position, player.angle, 2);
         draw_model(player.vertices, nSHIP_VERTICES, WHITE);
 
-        /* Poll for input */
-        key_pressed = (*ps2_data) & 0xff;  // get the last byte
-        // printf("%d\n", key_pressed);
-        key_pressed = KEY_RIGHT;
+        // update all objects
+
+        // read ps2 first byte
+        key_pressed = get_key_pressed();
+        // printf("%d\n", key_pressed);  
 
         if (key_pressed == KEY_RIGHT)
         {
@@ -229,12 +283,21 @@ int main(void)
         {
             rotate_ship_left(&player);
         }
+        else if (key_pressed == KEY_UP)
+        {
+            player.velocity = vec_add(player.velocity, rotate(ACCELERATE, player.angle));
+            printf("%f %f\n", player.velocity.x, player.velocity.y);
+        }
+        else if (key_pressed == KEY_SPACE)
+        {
+            // shoot bullet
+        }
 
-        /* Erase any boxes and lines that were drawn in the last iteration */
-        // code for updating the locations of boxes (not shown)
+        update_ship(&player);
+        printf("%f %f\n", player.velocity.x, player.velocity.y);
+
         // update_locations();
 
-        // code for drawing the boxes and lines (not shown)
 
         wait_for_vsync(); // swap front and back buffers on VGA vertical sync
         pixel_buffer_start = *(pixel_ctrl_ptr + 1); // new back buffer
@@ -305,6 +368,68 @@ void rotate_ship_left(Ship *ship) {
 
 void rotate_ship_right(Ship *ship) {
     ship->angle += SHIP_ROTATION_SPEED;
+}
+
+
+//================== A S T E R O I D ==================//
+
+Asteroid new_asteroid(Vector position, Vector velocity, float angle, float radius) {
+    Asteroid a = {
+        .position = position,
+        .velocity = velocity,
+        .angle = angle,
+        .radius = radius,
+        .radius_squared = radius * radius,
+        .prev = .next = NULL
+    };
+
+    // assign vertices
+    int i = 0;
+    for (; i < nASTEROID_VERTICES; i++) {
+        float rad = (float)rand()/RAND_MAX * 0.4 + 0.8;
+        float angle = (float)i * 2 * M_PI / nASTEROID_VERTICES;
+        a.vertices[i] = {rad * cos(angle), rad * sin(angle)};
+    }
+
+    return a;
+}
+
+bool point_in_asteroid(Asteroid *asteroid, int num_vertices, Vector p)
+{
+    // model asteroid as a circle
+    return asteroid->radius_squared >= magnitude_squared(vec_sub(p, asteroid->position));
+}
+
+//================== G A M E ==================//
+
+void init_game(Game* game) {
+
+}
+
+void update_ship(Ship *ship) {
+    ship->position = vec_add(ship->position, ship->velocity);
+    ship->position = wrap(SCREEN_SIZE, ship->position);
+    ship->velocity = vec_mul(ship->velocity,
+                                  (pow(1 - SHIP_FRICTION, 1.0/FPS)));    
+    
+}
+
+int get_key_pressed() {
+    volatile int* PS2_ptr = (int*)PS2_BASE;
+    int PS2_data, RVALID;
+    char byte1 = 0, byte2 = 0, byte3 = 0;
+    PS2_data = *(PS2_ptr); // read the Data register in the PS/2 port
+    RVALID = PS2_data & 0x8000; // extract the RVALID field
+    if (RVALID)
+    {
+        /* save the last three bytes of data */
+        byte1 = byte2;
+        byte2 = byte3;
+        byte3 = PS2_data & 0xFF;
+        // printf("%d, %d, %d\n", byte1, byte2, byte3);
+        return byte3;
+    }
+    else return KEY_NONE;
 }
 
 
@@ -427,4 +552,9 @@ void swap(int * a, int * b)
     int temp = *a;
     *a = *b;
     *b = temp;
+}
+
+bool point_on_screen(Vector p)
+{
+    return p.x >= 0 && p.x < RESOLUTION_X && p.y >= 0 && p.y < RESOLUTION_Y;
 }
