@@ -491,7 +491,7 @@ void init_game(Game* game) {
 }
 
 void reset_game(Game* game) {
-    reset_player(game);
+    reset_ship(game);
 
     delete_asteroid_list(game);
     // delete_bullet_list(game);
@@ -573,6 +573,26 @@ void delete_asteroid(Game* game, Asteroid* a) {
     if (a->next)
         a->next->prev = a->prev;
     free(a);
+}
+
+void update_asteroids(Game* game) {
+    Asteroid *a = game->asteroidHead;
+    for (; a != NULL; a = a->next) {
+        a->position = vec_add(a->position,
+                                vec_mul(a->velocity, dt));
+
+        // a->angle += 0.01;
+    }
+}
+
+void delete_asteroid_list(Game* game) {
+    Asteroid *a = game->asteroidHead;
+    while (a != NULL) {
+        Asteroid *next = a->next;
+        free(a);
+        a = next;
+    }
+    game->asteroidHead = NULL;
 }
 
 //================== R E N D E R I N G   &   G R A P H I C S ==================//
