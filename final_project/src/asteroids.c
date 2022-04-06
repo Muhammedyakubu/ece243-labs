@@ -125,6 +125,15 @@ void rotate_ship_right(Ship*);
 #define ASTEROID_SIZE 4 
 
 
+//================== G A M E ==================//
+ 
+Vector CENTER = {RESOLUTION_X/2, RESOLUTION_Y/2};
+
+ typedef struct Game {
+
+ } Game;
+
+
 //================== R E N D E R I N G   &   G R A P H I C S ==================//
 
 void wait_for_vsync();
@@ -162,7 +171,7 @@ Vector playerModel[] =
 {
     {0, -6},
     {4, 4},
-    {0, 0},
+    {0, 2},
     {-4, 4}
 };
 
@@ -194,9 +203,8 @@ int main(void)
     volatile int* ps2_data = (int*)PS2_BASE;
     int key_pressed = KEY_NONE;
 
-    Vector center = {RESOLUTION_X/2, RESOLUTION_Y/2};
     Ship player = {
-        .position = center,
+        .position = CENTER,
         .velocity = {0, 0},
         .angle = 0
     };
@@ -205,12 +213,13 @@ int main(void)
     {   
         clear_screen();
         
-        transform_model(player.vertices, playerModel, nSHIP_VERTICES, player.position, player.angle, 1);
+        transform_model(player.vertices, playerModel, nSHIP_VERTICES, player.position, player.angle, 2);
         draw_model(player.vertices, nSHIP_VERTICES, WHITE);
 
         /* Poll for input */
         key_pressed = (*ps2_data) & 0xff;  // get the last byte
-        printf("%d\n", key_pressed);
+        // printf("%d\n", key_pressed);
+        key_pressed = KEY_RIGHT;
 
         if (key_pressed == KEY_RIGHT)
         {
@@ -283,7 +292,7 @@ Vector wrap(Vector size, Vector p) {
 Vector rotate(Vector v, float a) {
     Vector c;
     c.x = v.x * cos(a) - v.y * sin(a);
-    c.y = v.x * sin(a) + v.y * cos(a);
+    c.y = - v.x * sin(a) + v.y * cos(a);
     return c;
 }
 
@@ -407,7 +416,6 @@ void draw_model(Vector model[], int num_vertices, short int color)
     for(; i < num_vertices ; i++)
     {
         vec_draw_line(model[i], model[ (i+1) % num_vertices], color);
-        vec_plot_pixel(model[i], RED);
     }
 }
 
