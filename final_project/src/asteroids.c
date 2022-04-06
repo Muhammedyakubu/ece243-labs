@@ -483,7 +483,7 @@ void init_game(Game* game) {
     for (i = 0; i < nASTEROIDS; i++) {
         float size = (float)rand()/RAND_MAX * (MAX_ASTEROID_RADIUS - MIN_ASTEROID_RADIUS) + MIN_ASTEROID_RADIUS;
         // results in a speed proportional to the asteroids' size
-        Vector speed = vec_mul(NORTH, (5 - log(size) / log(2)));    
+        Vector speed = vec_mul(NORTH, 5 - (log(size) / log(2)));    
         Asteroid *a = new_asteroid(
             rand_vec(game),   // randomize and make sure it is not near the ship
             rotate(speed, (float)rand()/RAND_MAX * 2 * M_PI),
@@ -581,10 +581,14 @@ void delete_asteroid(Game* game, Asteroid* a) {
 void update_asteroids(Game* game) {
     Asteroid *a = game->asteroidHead;
     for (; a != NULL; a = a->next) {
-        a->position = wrap (game->size, 
-                            vec_add(a->position, vec_mul(a->velocity, dt))
-                            );
-
+        a->position = vec_add(a->position, vec_mul(a->velocity, dt));
+        
+        // for some reason, wrapping doesn't work. fix later
+        // a->position = wrap (game->size, a->position);
+        printf("asteroid position: ");
+        printf("%f, %f\n", a->position.x, a->position.y);
+        printf("asteroid velocity: ");
+        printf("%f, %f\n", a->velocity.x, a->velocity.y);
         // a->angle += 0.01;
     }
 }
@@ -739,5 +743,6 @@ Vector rand_vec(Game *game)
     {
         p.y = rand() % RESOLUTION_Y;
     }
+    printf("rand_vec: %f, %f\n", p.x, p.y);
     return p;
 }
