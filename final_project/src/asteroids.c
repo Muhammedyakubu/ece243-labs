@@ -348,10 +348,14 @@ int main(void)
 
     int key_pressed = KEY_NONE;
 
+    game.asteroidHead = game.bulletHead = NULL;
+
     init_game(&game);
 
     while (1)
     {   
+        // indicate that game is running
+        *led_ptr = *sw_ptr;
 
         // clear_screen();
         clear_screen_fast(&game);
@@ -477,6 +481,7 @@ Asteroid *new_asteroid(Vector position, Vector velocity, float radius) {
     a->radius_squared = radius * radius;
     a->prev = a->next = NULL;
     a->dead = 0;
+    transform_model(a->vertices, asteroidModel, nASTEROID_VERTICES, position, 0, radius);
 
     return a;
 }
@@ -556,6 +561,9 @@ void reset_ship(Game* game) {
     game->player.position = vec_mul(game->size, 0.5);
     game->player.velocity = new_vector();
     game->player.angle = 0;
+    transform_model(game->player.vertices, playerModel, nSHIP_VERTICES, 
+                    game->player.position, game->player.angle, 1.5
+                    );
 }
 
 void update_game(Game* game) {
@@ -822,8 +830,8 @@ void vec_plot_pixel(Vector v, short int line_color)
 void plot_pixel(int x, int y, short int line_color)
 {
     // if pixel not in bounds, wrap around
-    x = mod(x + RESOLUTION_X, RESOLUTION_X);
-    x = mod(y + RESOLUTION_Y, RESOLUTION_Y);
+    x = (x + RESOLUTION_X) % RESOLUTION_X;
+    y = (y + RESOLUTION_Y) % RESOLUTION_Y;
 
     *(short int *)(pixel_buffer_start + (y << 10) + (x << 1)) = line_color;
 }
