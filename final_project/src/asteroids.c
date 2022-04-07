@@ -905,4 +905,4 @@ Vector rand_vec(Game *game)
     }
     // printf("rand_vec: %f, %f\n", p.x, p.y);
     return p;
-}
+// }
