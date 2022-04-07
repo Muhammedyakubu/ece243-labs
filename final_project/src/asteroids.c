@@ -808,7 +808,8 @@ void clear_screen()
 void copy_olds(Game* game) {
     Asteroid *a = game->asteroidHead;
     for (; a != NULL; a = a->next) {
-        for (int i = 0; i < nASTEROID_VERTICES; i++) {
+        int i = 0;
+        for (; i < nASTEROID_VERTICES; i++) {
             a->old_vertices[i] = a->vertices[i];
         }
         // wait until asteroid is dead to delete it
