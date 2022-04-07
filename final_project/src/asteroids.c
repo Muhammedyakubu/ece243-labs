@@ -91,10 +91,10 @@ Vector rotate(Vector, float);
 
 //================== S P A C E S H I P ==================//
 
-#define SHIP_ROTATION_SPEED M_PI/16 // fine tune later
+#define SHIP_ROTATION_SPEED M_PI/24 // fine tune later
 #define nSHIP_VERTICES 4
 #define SHIP_FRICTION 0.18
-#define SHIP_ACCELERATION 5
+#define SHIP_ACCELERATION 30
 #define SHIP_MAX_SPEED 10   // fine tune later
 
 typedef struct Ship {
@@ -167,7 +167,7 @@ void draw_asteroids(Asteroid*);
 
 //================== B U L L E T ==================//
 
-#define BULLET_SPEED 20
+#define BULLET_SPEED 30
 struct Bullet {
         // The original position of the bullet
         Vector position;
@@ -175,8 +175,6 @@ struct Bullet {
         Vector old_position;
         // The velocity of the bullet
         Vector velocity;
-        // The angle the bullet is pointing at
-        float angle;
         // is the bullet alive
         bool alive;
         //next bullet
@@ -445,7 +443,10 @@ void accelerate_ship(Ship* ship) {
 
 void update_ship(Ship *ship) {
     // consider replacing screen size with game->/.size
-    ship->position = wrap(SCREEN_SIZE, vec_add(ship->position, ship->velocity));
+    ship->position = wrap(
+        SCREEN_SIZE, 
+        vec_add(ship->position, vec_mul(ship->velocity, dt))
+    );
     // add some friction to the ship
     ship->velocity = vec_mul(ship->velocity, (pow(1 - SHIP_FRICTION, dt)));    
     // printf("ship velocity: %f %f\n", ship->velocity.x, ship->velocity.y);
@@ -497,6 +498,7 @@ void draw_asteroids(Asteroid* asteroids) {
 Bullet *new_bullet(Vector position, float angle){
     Bullet *b = (Bullet *)malloc(sizeof(Bullet));
     b->position = position;
+    b->alive = 1;
     b->velocity = vec_mul(rotate(NORTH, angle), BULLET_SPEED);
     b->prev = b->next = NULL;
     return b;
@@ -536,7 +538,7 @@ void reset_game(Game* game) {
     reset_ship(game);
 
     delete_asteroid_list(game);
-    // delete_bullet_list(game);
+    delete_bullet_list(game);
     game->score = 0;
     game->level = 1;
     game->lives = 5;
@@ -597,10 +599,10 @@ void handle_key_press(Game* game, int key_pressed) {
     }
     else if (key_pressed == KEY_SPACE)
     {
-        // shoot bullet
+        // shoot bullet from the tip of the ship
         insert_bullet(
             game, 
-            new_bullet(game->player.position, game->player.angle)
+            new_bullet(game->player.vertices[0], game->player.angle)
         );
     }
 }
@@ -689,7 +691,8 @@ bool check_collision(Game* game, Asteroid* a) {
     for (; b != NULL; b = b->next) {
         if (point_in_asteroid(a, nASTEROID_VERTICES, b->position)) {
             // delete bullet
-            delete_bullet(game, b);
+            b->alive = 0;
+            // delete_bullet(game, b);
             // update score
             game->score += 1;
             return true;
@@ -780,7 +783,7 @@ void update_bullets(Game* game) {
         b->position = vec_add(b->position, vec_mul(b->velocity, dt));
         if (!point_on_screen(b->position)) {
             b->alive = false;
-            delete_bullet(game, b);
+            // delete_bullet(game, b);
         }
     }
 }
@@ -895,6 +898,7 @@ void copy_olds(Game* game) {
     Bullet *b = game->bulletHead;
     for (; b != NULL; b = b->next) {
         b->old_position = b->position;
+        if (!b->alive) delete_bullet(game, b);
     }
 
 }
@@ -976,14 +980,15 @@ bool point_on_screen(Vector p)
 Vector rand_vec(Game *game)
 {
     int radius = 2 * MAX_ASTEROID_RADIUS;
-    Vector p;
+    Vector p = {0, 0};
     p.x = rand() % RESOLUTION_X;
-    while (p.x <= radius + game->player.position.x && p.x >= game->player.position.x - radius)
+    while ((p.x <= radius + game->player.position.x && p.x >= game->player.position.x - radius) || !point_on_screen(p))
+        p.x = rand() % RESOLUTION_X;
     {
         p.x = rand() % RESOLUTION_X;
     }
     p.y = rand() % RESOLUTION_Y;
-    while (p.y <= radius + game->player.position.y && p.y >= game->player.position.y - radius)
+    while ((p.y <= radius + game->player.position.y && p.y >= game->player.position.y - radius) || !point_on_screen(p))
     {
         p.y = rand() % RESOLUTION_Y;
     }
