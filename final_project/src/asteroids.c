@@ -167,7 +167,7 @@ void draw_asteroids(Asteroid*);
 
 //================== B U L L E T ==================//
 
-#define BULLET_SPEED 10
+#define BULLET_SPEED 20
 struct Bullet {
         // The original position of the bullet
         Vector position;
@@ -550,13 +550,13 @@ void reset_ship(Game* game) {
 
 void update_game(Game* game) {
     update_asteroids(game);
-    // update_bullets(game);
+    update_bullets(game);
     update_ship(&game->player);
 }
 
 void draw_game(Game *game) {
     draw_asteroids(game->asteroidHead);
-    // draw_bullets(game->bulletHead);
+    draw_bullets(game->bulletHead);
     draw_ship(&game->player);
 
     /* to be implemented */
@@ -598,6 +598,10 @@ void handle_key_press(Game* game, int key_pressed) {
     else if (key_pressed == KEY_SPACE)
     {
         // shoot bullet
+        insert_bullet(
+            game, 
+            new_bullet(game->player.position, game->player.angle)
+        );
     }
 }
 
