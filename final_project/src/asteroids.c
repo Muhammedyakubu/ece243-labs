@@ -338,6 +338,13 @@ int main(void)
 
 
     //================== M A I N   L O O P ==================//
+    volatile int * led_ptr = (int *)LEDR_BASE;
+    volatile int * sw_ptr = (int *)SW_BASE;
+
+    while (*sw_ptr == 0);
+
+    // indicate that game is being run when when any switch is toggled
+    *led_ptr = 0x01;
 
     int key_pressed = KEY_NONE;
 
@@ -345,6 +352,7 @@ int main(void)
 
     while (1)
     {   
+
         // clear_screen();
         clear_screen_fast(&game);
 
@@ -814,14 +822,8 @@ void vec_plot_pixel(Vector v, short int line_color)
 void plot_pixel(int x, int y, short int line_color)
 {
     // if pixel not in bounds, wrap around
-    if (x < 0)
-        x = RESOLUTION_X + x;
-    if (x >= RESOLUTION_X)
-        x = x - RESOLUTION_X;
-    if (y < 0)
-        y = RESOLUTION_Y + y;
-    if (y >= RESOLUTION_Y)
-        y = y - RESOLUTION_Y;
+    x = mod(x + RESOLUTION_X, RESOLUTION_X);
+    x = mod(y + RESOLUTION_Y, RESOLUTION_Y);
 
     *(short int *)(pixel_buffer_start + (y << 10) + (x << 1)) = line_color;
 }
