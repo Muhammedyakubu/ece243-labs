@@ -298,6 +298,7 @@ Vector rand_vec(Game *game);
 
 //================== G L O B A L S ==================//
 
+#define CLEAR_FAST
 volatile int pixel_buffer_start; // global variable
 
 Game game;
@@ -357,8 +358,11 @@ int main(void)
         // indicate that game is running
         *led_ptr = *sw_ptr;
 
-        // clear_screen();
+        #ifdef CLEAR_FAST
         clear_screen_fast(&game);
+        #else
+        clear_screen();
+        #endif
 
         // draw all objects
         update_game(&game);
@@ -480,7 +484,7 @@ Asteroid *new_asteroid(Vector position, Vector velocity, float radius) {
     a->radius = radius;
     a->radius_squared = radius * radius;
     a->prev = a->next = NULL;
-    a->dead = 0;
+    a->dead = false;
     transform_model(a->vertices, asteroidModel, nASTEROID_VERTICES, position, 0, radius);
 
     return a;
@@ -497,7 +501,9 @@ bool point_in_asteroid(Asteroid *asteroid, int num_vertices, Vector p)
 void draw_asteroids(Asteroid* asteroids) {
     Asteroid *a = asteroids;
     for (; a != NULL; a = a->next) {
+        #ifdef CLEAR_FAST
         if (a->dead) continue;
+        #endif
         transform_model(a->vertices, asteroidModel, 
                         nASTEROID_VERTICES, a->position, 
                         a->angle, a->radius);
@@ -511,7 +517,7 @@ void draw_asteroids(Asteroid* asteroids) {
 Bullet *new_bullet(Vector position, float angle){
     Bullet *b = (Bullet *)malloc(sizeof(Bullet));
     b->position = position;
-    b->alive = 1;
+    b->alive = true;
     b->velocity = vec_mul(rotate(NORTH, angle), BULLET_SPEED);
     b->prev = b->next = NULL;
     return b;
@@ -520,6 +526,9 @@ Bullet *new_bullet(Vector position, float angle){
 void draw_bullets(Bullet* bullets) {
     Bullet *b = bullets;
     for (; b != NULL; b = b->next) {
+        #ifdef CLEAR_FAST
+        if (!b->alive) continue;
+        #endif
         // consider 
         vec_plot_pixel(b->position, WHITE);
     }
@@ -687,9 +696,13 @@ void update_asteroids(Game* game) {
 
             if (a->radius/2 > MIN_ASTEROID_RADIUS) 
                 split_asteroid(game, a);
-            else 
-                a->dead = 1;
-                // delete_asteroid(game, a);
+            else {
+                #ifdef CLEAR_FAST
+                a->dead = true;
+                #else
+                delete_asteroid(game, a);
+                #endif
+            }
         }
 
         // printf("asteroid position: ");
@@ -707,8 +720,11 @@ bool check_collision(Game* game, Asteroid* a) {
     for (; b != NULL; b = b->next) {
         if (point_in_asteroid(a, nASTEROID_VERTICES, b->position)) {
             // delete bullet
-            b->alive = 0;
-            // delete_bullet(game, b);
+            #ifdef CLEAR_FAST
+            b->alive = false;
+            #else
+            delete_bullet(game, b);
+            #endif
             // update score
             game->score += 1;
             return true;
@@ -746,8 +762,11 @@ void split_asteroid(Game* game, Asteroid* a) {
         );
         insert_asteroid(game, a_new);
     }
-    a->dead = 1;
-    // delete_asteroid(game, a);
+    #ifdef CLEAR_FAST
+    a->dead = true;
+    #else
+    delete_asteroid(game, a);
+    #endif
 }
 
 void delete_asteroid_list(Game* game) {
@@ -798,8 +817,11 @@ void update_bullets(Game* game) {
     for (; b != NULL; b = b->next) {
         b->position = vec_add(b->position, vec_mul(b->velocity, dt));
         if (!point_on_screen(b->position)) {
+            #ifdef CLEAR_FAST
             b->alive = false;
-            // delete_bullet(game, b);
+            #else
+            delete_bullet(game, b);
+            #endif
         }
     }
 }
