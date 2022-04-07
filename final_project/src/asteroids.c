@@ -650,7 +650,7 @@ void delete_asteroid(Game* game, Asteroid* a) {
         a->next->prev = a->prev;
 
     // for some reason, freeing the asteroid causes a segfault
-    // free(a);
+    free(a);
 }
 
 void update_asteroids(Game* game) {
@@ -685,7 +685,7 @@ void update_asteroids(Game* game) {
 bool check_collision(Game* game, Asteroid* a) {
 
     // check collision with each bullet
-    /* Bullet* b = game->bulletHead;
+    Bullet* b = game->bulletHead;
     for (; b != NULL; b = b->next) {
         if (point_in_asteroid(a, nASTEROID_VERTICES, b->position)) {
             // delete bullet
@@ -694,7 +694,7 @@ bool check_collision(Game* game, Asteroid* a) {
             game->score += 1;
             return true;
         }
-    } */
+    }
 
     // check collision with ship
     int i = 0;
