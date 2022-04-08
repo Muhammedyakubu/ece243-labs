@@ -10,7 +10,7 @@ void update_bullets(Game* game) {
     Bullet* b = game->bulletHead;
     while (b != NULL) {
         bullet->position = vec_add(bullet->position, vec_mul(bullet->velocity, dt));
-        if (withinWindow(b->position)) {
+        if (point_on_screen(b->position)) {
             b->alive = true;
         }
         else {
