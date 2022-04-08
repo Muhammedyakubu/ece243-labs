@@ -97,7 +97,7 @@ Vector rotate(Vector, float);
 #define SHIP_WIDTH 8
 
 #define SHIP_ROTATION_SPEED M_PI/16 // fine tune later
-#define SHIP_FRICTION 0.18
+#define SHIP_FRICTION 0.4
 #define SHIP_ACCELERATION 30
 #define SHIP_MAX_SPEED 170  // based on real game speed
 
@@ -203,7 +203,7 @@ void draw_bullets(Bullet*);
 //================== G A M E ==================//
 #define FPS 60
 // #define dt 1.0/FPS
-#define dt 1.0/10
+// #define dt 1.0/10
 #define COLLISION_BULLET 1
 #define COLLISION_SHIP 2
 const Vector CENTER = {RESOLUTION_X/2, RESOLUTION_Y/2};
@@ -313,6 +313,7 @@ Vector rand_vec(Game *game);
 #define CLEAR_FAST
 volatile int pixel_buffer_start; // global variable
 
+float dt = 1.0/FPS;
 Game game;
 
 const Vector NORTH = {0, -1};
@@ -394,10 +395,10 @@ int main(void)
             wait_for_vsync(); // swap front and back buffers on VGA vertical sync
             pixel_buffer_start = *(pixel_ctrl_ptr + 1); // new back buffer
 
-            // time to draw
+            // time taken for draw
             now = clock();
-            float time_elapsed = (float)(now - last_drawn) / CLOCKS_PER_SEC;
-            printf("seconds per frame: %f, fps: %f\n", time_elapsed, 1.0/time_elapsed);
+            float dt = (float)(now - last_drawn) / CLOCKS_PER_SEC;
+            // printf("seconds per frame: %f, fps: %f\n", dt, 1.0/dt);
             last_drawn = now;
         }
         //draw_game_over(&game);
@@ -470,10 +471,22 @@ void rotate_ship_right(Ship *ship) {
     ship->angle += SHIP_ROTATION_SPEED;
 }
 
+void bound_speed(Ship *ship) {
+    if (ship->velocity.x > SHIP_MAX_SPEED)
+        ship->velocity.x = SHIP_MAX_SPEED;
+    else if (ship->velocity.x < -SHIP_MAX_SPEED)
+        ship->velocity.x = -SHIP_MAX_SPEED;
+    if (ship->velocity.y > SHIP_MAX_SPEED)
+        ship->velocity.y = SHIP_MAX_SPEED;
+    else if (ship->velocity.y < -SHIP_MAX_SPEED)
+        ship->velocity.y = -SHIP_MAX_SPEED;
+}
+
 void accelerate_ship(Ship* ship) {
     ship->velocity = vec_add(ship->velocity, 
                             vec_mul(rotate(NORTH, ship->angle), 
-                                    SHIP_ACCELERATION * dt));
+                                    SHIP_ACCELERATION));
+    bound_speed(ship);
     // printf("%f %f\n", ship->velocity.x, ship->velocity.y);
 }
 
@@ -485,7 +498,7 @@ void update_ship(Ship *ship) {
     );
     // add some friction to the ship
     ship->velocity = vec_mul(ship->velocity, (pow(1 - SHIP_FRICTION, dt)));    
-    // printf("ship velocity: %f %f\n", ship->velocity.x, ship->velocity.y);
+    printf("ship velocity: %f %f\n", ship->velocity.x, ship->velocity.y );
 
 }
 
@@ -703,9 +716,11 @@ void handle_key_press(Game* game, int key_pressed) {
     else if (key_pressed == KEY_SPACE)
     {
         // shoot bullet from the tip of the ship
+        Bullet *b = new_bullet(game->player.vertices[0], game->player.angle);
+        b->velocity = vec_add(game->player.velocity, b->velocity);
         insert_bullet(
             game, 
-            new_bullet(game->player.vertices[0], game->player.angle)
+            b
         );
     }
 }
@@ -723,7 +738,9 @@ void add_random_asteroids(Game* game, int num_asteroids) {
         float size = (float)rand()/RAND_MAX * (MAX_ASTEROID_RADIUS - MIN_ASTEROID_RADIUS) + MIN_ASTEROID_RADIUS;
         // results in a speed proportional to the asteroids' size
         Vector speed = vec_mul(NORTH, 
-                                ASTEROID_MIN_SPEED * (5 - (log(size) / log(2))));    
+                                ASTEROID_MIN_SPEED + 
+                                size / MIN_ASTEROID_RADIUS * 
+                                (ASTEROID_MAX_SPEED - ASTEROID_MIN_SPEED));    
         Asteroid *a = new_asteroid(
             rand_vec(game),
             rotate(speed, (float)rand()/RAND_MAX * 2 * M_PI),
@@ -831,7 +848,9 @@ void split_asteroid(Game* game, Asteroid* a) {
         float size = a->radius/2;
         // results in a speed proportional to the asteroids' size
         Vector speed = vec_mul(NORTH, 
-                                ASTEROID_MIN_SPEED + size * ASTEROID_SPEED_INCR);
+                                ASTEROID_MIN_SPEED + 
+                                size / MIN_ASTEROID_RADIUS * 
+                                (ASTEROID_MAX_SPEED - ASTEROID_MIN_SPEED));
                                 
         Asteroid *a_new = new_asteroid(
                 a->position,
