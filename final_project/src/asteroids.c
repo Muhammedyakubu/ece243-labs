@@ -95,9 +95,9 @@ Vector rotate(Vector, float);
 #define nSHIP_VERTICES_THRUST 8
 #define nSHIP_VERTICES 4
 #define SHIP_COLOR CYAN
-#define SHIP_SCALE 1
+#define SHIP_SCALE 1.2
 #define SHIP_LENGTH 10
-#define SHIP_WIDTH 8
+#define SHIP_WIDTH 8 * SHIP_SCALE
 
 #define SHIP_ROTATION_SPEED M_PI/12 // fine tune later
 #define SHIP_FRICTION 0.55
@@ -434,6 +434,7 @@ int main(void)
         while (key_pressed != KEY_TAB) {
             key_pressed = get_key_pressed();
         }
+        key_pressed = KEY_NONE;
         clear_screen();
         pixel_buffer_start = *(pixel_ctrl_ptr + 1); // new back buffer
     }
@@ -538,7 +539,7 @@ void update_ship(Ship *ship) {
 }
 
 void draw_ship(Ship *ship, short int color) {
-    transform_model(ship->vertices, playerModel, nSHIP_VERTICES_THRUST, ship->position, ship->angle, 1);
+    transform_model(ship->vertices, playerModel, nSHIP_VERTICES_THRUST, ship->position, ship->angle, SHIP_SCALE);
     draw_model(ship->vertices, nSHIP_VERTICES, color);
     if (ship->thrusting)
         draw_model(ship->vertices + 4, nSHIP_VERTICES, ORANGE);
@@ -638,8 +639,8 @@ void draw_bullets(Bullet* bullets) {
 
 void main_screen(Game* game) {
     int i = 2;
-    int w = game->size.x;
-    int h = game->size.y;
+    int w = SCREEN_SIZE.x;
+    int h = SCREEN_SIZE.y;
     int a = (w / 2 - 78);
     int b = (w / 2 - 14 - 69);
     int c = (w / 2 + 78);
@@ -652,7 +653,7 @@ void main_screen(Game* game) {
     vec_draw_line(e, g, WHITE);
     vec_draw_line(j, g, WHITE);
     vec_draw_line(j, f, WHITE);
-    for (i; i < 11; i++) {
+    for (; i < 11; i++) {
         int x = (w / 2 - 78) + 13*i;
         int y = (w / 2 - 14) + 6 - 69;
             if (i==2) {
@@ -755,7 +756,7 @@ void clear_main_screen(Game* game) {
     vec_draw_line(e, g, BLACK);
     vec_draw_line(j, g, BLACK);
     vec_draw_line(j, f, BLACK);
-    for (i; i < 11; i++) {
+    for (; i < 11; i++) {
         int x = (w / 2 - 78) + 13*i;
         int y = (w / 2 - 14) + 6 - 69;
         if (i==2) {
@@ -859,7 +860,7 @@ void game_over(Game* game) {
     vec_draw_line(e, g, WHITE);
     vec_draw_line(j, g, WHITE);
     vec_draw_line(j, f, WHITE);
-    for (i; i < 11; i++) {
+    for (; i < 11; i++) {
         int x = (w / 2 - 78) + 13*i;
         int y = (w / 2 - 14) + 6 - 69;
         if (i==2) { //G
@@ -968,7 +969,7 @@ void clear_game_over(Game* game) {
     vec_draw_line(e, g, BLACK);
     vec_draw_line(j, g, BLACK);
     vec_draw_line(j, f, BLACK);
-    for (i; i < 11; i++) {
+    for (; i < 11; i++) {
         int x = (w / 2 - 78) + 13*i;
         int y = (w / 2 - 14) + 6;
         if (i==2) { //G
@@ -1070,9 +1071,11 @@ void draw_lives(Game* game) {
     for (; i < nLIVES; i++) {
         Vector temp = {
             .x = 6 + SHIP_WIDTH * i,
-            .y = 7,
+            .y = 7
         };
+
         ship.position = vec_sub(game->size, temp);
+
         draw_ship(
             &ship, 
             (i < game->lives) ? MAGENTA : GREY
@@ -1188,6 +1191,8 @@ void handle_key_press(Game* game, int key_pressed) {
             game, 
             b
         );
+        Vector recoil = vec_mul(b->velocity, -0.01);
+        game->player.position = vec_add(game->player.position, recoil);
     }
 }
 
@@ -1205,7 +1210,7 @@ void add_random_asteroids(Game* game, int num_asteroids) {
         // results in a speed proportional to the asteroids' size
         Vector speed = vec_mul(NORTH, 
                                 ASTEROID_MIN_SPEED + 
-                                size / MAX_ASTEROID_RADIUS * 
+                                MIN_ASTEROID_RADIUS / size * 
                                 (ASTEROID_MAX_SPEED - ASTEROID_MIN_SPEED));    
         Asteroid *a = new_asteroid(
             rand_vec(game),
@@ -1314,7 +1319,7 @@ void split_asteroid(Game* game, Asteroid* a) {
         // results in a speed proportional to the asteroids' size
         Vector speed = vec_mul(NORTH, 
                                 ASTEROID_MIN_SPEED + 
-                                size / MAX_ASTEROID_RADIUS * 
+                                MIN_ASTEROID_RADIUS/size * 
                                 (ASTEROID_MAX_SPEED - ASTEROID_MIN_SPEED));
                                 
         Asteroid *a_new = new_asteroid(
@@ -1521,26 +1526,10 @@ void clear_asteroids(Asteroid *a) {
     }
 }
 
-void clear_lives(Game *g) {
-    /* int i = 0;
-    Ship ship = {
-        .thrusting = false,
-    };
-    for (; i < g->lives + 1; i++) {
-        Vector temp;
-        temp.x = 6 + 8 * i;
-        temp.y = 7;
-        ship.position = vec_sub(g->size, temp);
-        draw_ship(&ship, BLACK);
-    } */
-}
-
-
 void clear_screen_fast(Game * g) {
     clear_asteroids(g->asteroidHead);
     clear_player(&g->player);
     clear_bullets(g->bulletHead);
-    clear_lives(g);
     copy_olds(g);
 }
 
