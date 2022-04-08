@@ -56,8 +56,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <stdbool.h>
-/* #include "./address_map_arm.h"
-#include "./usb_hid_keys.h" */
+
 
 
 /******************************************************************************
@@ -495,9 +494,28 @@ Asteroid *new_asteroid(Vector position, Vector velocity, float radius) {
 }
 
 bool point_in_asteroid(Asteroid *asteroid, int num_vertices, Vector p)
-{
+{   
     // model asteroid as a circle
-    return (asteroid->radius_squared >= magnitude_squared(vec_sub(p, asteroid->position)));
+    if (asteroid->radius_squared >= magnitude_squared(vec_sub(p, asteroid->position))) 
+        return true;
+
+    // check if warped x point is in polygon
+    /* p.x += SCREEN_SIZE.x;
+    if (asteroid->radius_squared >= magnitude_squared(vec_sub(p, asteroid->position)))
+        return true;
+
+    // check if warped y point is in polygon
+    p.y += SCREEN_SIZE.y;
+    p.x -= SCREEN_SIZE.x;
+    if (asteroid->radius_squared >= magnitude_squared(vec_sub(p, asteroid->position)))
+        return true;
+
+    // check if warped x & y point is in polygon
+    vec_add(p, SCREEN_SIZE);
+    if (asteroid->radius_squared >= magnitude_squared(vec_sub(p, asteroid->position))) 
+        return true; */
+
+    return false;
 
     // might want to do more precise collision detection later
 }
