@@ -91,8 +91,10 @@ Vector rotate(Vector, float);
 
 //================== S P A C E S H I P ==================//
 
-#define SHIP_ROTATION_SPEED M_PI/24 // fine tune later
 #define nSHIP_VERTICES 4
+#define SHIP_COLOR CYAN
+
+#define SHIP_ROTATION_SPEED M_PI/24 // fine tune later
 #define SHIP_FRICTION 0.18
 #define SHIP_ACCELERATION 30
 #define SHIP_MAX_SPEED 10   // fine tune later
@@ -132,8 +134,10 @@ void draw_ship(Ship *);
 #define ASTEROID_MIN_SPEED 2
 #define ASTEROID_MAX_SPEED 5
 
-#define nASTEROID_VERTICES 8
+#define nASTEROID_VERTICES 12
 #define nASTEROIDS 4
+
+#define ASTEROID_COLOR WHITE
 
 struct Asteroid {
     // The position of the asteroid
@@ -168,6 +172,9 @@ void draw_asteroids(Asteroid*);
 //================== B U L L E T ==================//
 
 #define BULLET_SPEED 30
+#define BULLET_SIZE 2
+#define BULLET_COLOR CYAN
+
 struct Bullet {
         // The original position of the bullet
         Vector position;
@@ -342,14 +349,11 @@ int main(void)
     volatile int * led_ptr = (int *)LEDR_BASE;
     volatile int * sw_ptr = (int *)SW_BASE;
 
-    while (*sw_ptr == 0);
-
     // indicate that game is being run when when any switch is toggled
-    *led_ptr = 0x01;
+    while (*sw_ptr == 0);
+    *led_ptr = *sw_ptr;
 
     int key_pressed = KEY_NONE;
-
-    game.asteroidHead = game.bulletHead = NULL;
 
     init_game(&game);
 
@@ -470,8 +474,8 @@ void update_ship(Ship *ship) {
 }
 
 void draw_ship(Ship *ship) {
-    transform_model(ship->vertices, playerModel, nSHIP_VERTICES, ship->position, ship->angle, 1.5);
-    draw_model(ship->vertices, nSHIP_VERTICES, WHITE);
+    transform_model(ship->vertices, playerModel, nSHIP_VERTICES, ship->position, ship->angle, 1);
+    draw_model(ship->vertices, nSHIP_VERTICES, SHIP_COLOR);
 }
 
 //================== A S T E R O I D ==================//
@@ -507,7 +511,7 @@ void draw_asteroids(Asteroid* asteroids) {
         transform_model(a->vertices, asteroidModel, 
                         nASTEROID_VERTICES, a->position, 
                         a->angle, a->radius);
-        draw_model(a->vertices, nASTEROID_VERTICES, WHITE);
+        draw_model(a->vertices, nASTEROID_VERTICES, ASTEROID_COLOR);
     }
 }
     
@@ -523,6 +527,15 @@ Bullet *new_bullet(Vector position, float angle){
     return b;
 }
 
+void draw_bullet(Vector p, short int color) {
+    int i, j;
+    for (i = 0; i < BULLET_SIZE; i++) {
+        for (j = 0; j < BULLET_SIZE; j++) {
+            plot_pixel(p.x + i, p.y + j, color);
+        }
+    }
+}
+
 void draw_bullets(Bullet* bullets) {
     Bullet *b = bullets;
     for (; b != NULL; b = b->next) {
@@ -530,7 +543,7 @@ void draw_bullets(Bullet* bullets) {
         if (!b->alive) continue;
         #endif
         // consider 
-        vec_plot_pixel(b->position, WHITE);
+        draw_bullet(b->position, BULLET_COLOR);
     }
 }
 
@@ -539,6 +552,8 @@ void draw_bullets(Bullet* bullets) {
 
 void init_game(Game* game) {
     game->size = SCREEN_SIZE;
+    game->asteroidHead = NULL; 
+    game->bulletHead = NULL;
 
     reset_game(game);
 
@@ -594,17 +609,17 @@ void draw_game(Game *game) {
 int get_key_pressed() {
     volatile int* PS2_ptr = (int*)PS2_BASE;
     int PS2_data, RVALID;
-    char byte1 = 0, byte2 = 0, byte3 = 0;
+    // char byte1 = 0, byte2 = 0, byte3 = 0;
     PS2_data = *(PS2_ptr); // read the Data register in the PS/2 port
     RVALID = PS2_data & 0x8000; // extract the RVALID field
     if (RVALID)
     {
         /* save the last three bytes of data */
-        byte1 = byte2;
-        byte2 = byte3;
-        byte3 = PS2_data & 0xFF;
+        // byte1 = byte2;
+        // byte2 = byte3;
+        // byte3 = PS2_data & 0xFF;
         // printf("%d, %d, %d\n", byte1, byte2, byte3);
-        return byte3;
+        return PS2_data & 0xFF;
     }
     else return KEY_NONE;
 }
@@ -945,7 +960,7 @@ void clear_asteroid(Asteroid* a) {
 
 void clear_bullets(Bullet* b) {
     for (; b != NULL; b = b->next) {
-        vec_plot_pixel(b->old_position, BLACK);
+        draw_bullet(b->old_position, BLACK);
     }
 }
 
