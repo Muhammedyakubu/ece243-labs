@@ -14,7 +14,7 @@ void check_collision(Game* game, Asteroid* a) {
     while (b != NULL) {
         if (point_in_asteroid(a, nASTEROID_VERTICES, b->position)) {
             removeBullet(bhead, b);
-            if (a->radius <= MIN_ASTEROID_RADIUS) {
+            if (a->radius <= ASTEROID_MIN_RADIUS) {
                 delete_asteroid(game, a);
             }
             else {
