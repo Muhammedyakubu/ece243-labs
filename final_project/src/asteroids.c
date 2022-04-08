@@ -122,17 +122,16 @@ void accelerate_ship(Ship*);
 // updates the position and velocity of the ship
 void update_ship(Ship *);
 
-void draw_ship(Ship *);
+void draw_ship(Ship *, short int);
 
 
 //================== A S T E R O I D ==================//
 
 // starting radius of asteroid in pixels
-#define MAX_ASTEROID_RADIUS 32
+#define MAX_ASTEROID_RADIUS 24
 #define MIN_ASTEROID_RADIUS 6
 
-#define ASTEROID_MIN_SPEED 2
-#define ASTEROID_MAX_SPEED 5
+#define ASTEROID_MIN_SPEED 5
 
 #define nASTEROID_VERTICES 12
 #define nASTEROIDS 4
@@ -392,6 +391,7 @@ int main(void)
 
 
 
+
 //================== V E C T O R ==================//
 
 Vector new_vector() {
@@ -473,9 +473,9 @@ void update_ship(Ship *ship) {
 
 }
 
-void draw_ship(Ship *ship) {
+void draw_ship(Ship *ship, short int color) {
     transform_model(ship->vertices, playerModel, nSHIP_VERTICES, ship->position, ship->angle, 1);
-    draw_model(ship->vertices, nSHIP_VERTICES, SHIP_COLOR);
+    draw_model(ship->vertices, nSHIP_VERTICES, color);
 }
 
 //================== A S T E R O I D ==================//
@@ -549,6 +549,32 @@ void draw_bullets(Bullet* bullets) {
 
 
 //================== G A M E ==================//
+//
+//void main_screen(Game* game) {
+//    plot_line
+//    vec_draw_line(Vector a, Vector b, short int color);
+//}
+
+void draw_lives(Game* game) {
+    int i = 0;
+    Ship ship;
+    for (i; i < game->lives; i++) {
+        Vector temp;
+        temp.x = 6 + 8 * i;
+        temp.y = 7;
+        ship.position = vec_sub(game->size, temp);
+        draw_ship(&ship, PURPLE);
+    }
+}
+
+void draw_score(Game* game) {
+
+}
+
+void draw_high_score(Game* game) {
+
+}
+
 
 void init_game(Game* game) {
     game->size = SCREEN_SIZE;
@@ -599,11 +625,10 @@ void update_game(Game* game) {
 void draw_game(Game *game) {
     draw_asteroids(game->asteroidHead);
     draw_bullets(game->bulletHead);
-    draw_ship(&game->player);
-
+    draw_ship(&game->player, SHIP_COLOR);
     /* to be implemented */
     // draw_score(game->score);
-    // draw_lives(game->lives);
+    draw_lives(game);
 }
 
 int get_key_pressed() {
@@ -972,10 +997,24 @@ void clear_asteroids(Asteroid *a) {
     }
 }
 
+void clear_lives(Game *g) {
+    int i = 0;
+    Ship ship;
+    for (i; i < g->lives + 1; i++) {
+        Vector temp;
+        temp.x = 6 + 8 * i;
+        temp.y = 7;
+        ship.position = vec_sub(g->size, temp);
+        draw_ship(&ship, BLACK);
+    }
+}
+
+
 void clear_screen_fast(Game * g) {
     clear_asteroids(g->asteroidHead);
     clear_player(&g->player);
     clear_bullets(g->bulletHead);
+    clear_lives(g);
     copy_olds(g);
 }
 
