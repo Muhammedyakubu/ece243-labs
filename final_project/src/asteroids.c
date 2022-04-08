@@ -38,6 +38,8 @@
 #define RESOLUTION_Y 240
 
 #define KEY_NONE 0 // No key pressed
+#define KEY_TAB 0x0D //keyboard TAB
+#define KEY_R 0x2D //keyboard R
 #define KEY_RIGHT 116 // Keyboard Right Arrow
 #define KEY_LEFT 107 // Keyboard Left Arrow
 #define KEY_DOWN 114 // Keyboard Down Arrow
@@ -230,11 +232,17 @@ typedef struct Game {
 
     int state;
 
+    int gamecode;
+
     // Vector* pModel, aModel;
 } Game;
 
 void init_game(Game*);
 
+void main_screen(Game*);
+void clear_main_screen(Game*);
+void game_over(Game*);
+void clear_game_over(Game*);
 void reset_game(Game*);
 
 void update_game(Game*);
@@ -369,12 +377,23 @@ int main(void)
 
     int key_pressed = KEY_NONE;
 
-    init_game(&game);
+    //init_game(&game);
     clock_t last_drawn, now;
     last_drawn = clock();
     while (1) {
         //while (game->lives > 0)
-        while (1)
+        clear_screen();
+        main_screen(&game);
+        wait_for_vsync(); // swap front and back buffers on VGA vertical sync
+
+        while (key_pressed != KEY_TAB) {
+            key_pressed = get_key_pressed();
+        }
+        clear_main_screen(&game);
+        pixel_buffer_start = *(pixel_ctrl_ptr + 1); // new back buffer
+        //clear_screen();
+        init_game(&game);
+        while (game.lives > 0)
         {
             // indicate that game is running
             *led_ptr = *sw_ptr;
@@ -387,7 +406,7 @@ int main(void)
 
             // draw all objects
             update_game(&game);
-
+            //game.gamecode = 0;
             draw_game(&game);
             // swap_buffers();
 
@@ -409,7 +428,14 @@ int main(void)
             // printf("seconds per frame: %f, fps: %f\n", dt, 1.0/dt);
             last_drawn = now;
         }
-        //draw_game_over(&game);
+        clear_screen();
+        game_over(&game);
+        wait_for_vsync(); // swap front and back buffers on VGA vertical sync
+        while (key_pressed != KEY_TAB) {
+            key_pressed = get_key_pressed();
+        }
+        clear_screen();
+        pixel_buffer_start = *(pixel_ctrl_ptr + 1); // new back buffer
     }
     return 0;
 }
@@ -610,13 +636,432 @@ void draw_bullets(Bullet* bullets) {
 
 //================== G A M E ==================//
 
-/* void main_screen(Game* game) {
-    Vector temp = {};
-    Vector a = {(game->size.x) / 3, (game->size.y / 4)}
-            vec_sub(game->size, )
-    vec_draw_line(Vector a, Vector b, short int color);
+void main_screen(Game* game) {
+    int i = 2;
+    int w = game->size.x;
+    int h = game->size.y;
+    int a = (w / 2 - 78);
+    int b = (w / 2 - 14 - 69);
+    int c = (w / 2 + 78);
+    int d = (w / 2 + 14 - 69);
+    Vector e = {a, b};
+    Vector f = {a, d};
+    Vector g = {c, b};
+    Vector j = {c, d};
+    vec_draw_line(e, f, WHITE);
+    vec_draw_line(e, g, WHITE);
+    vec_draw_line(j, g, WHITE);
+    vec_draw_line(j, f, WHITE);
+    for (i; i < 11; i++) {
+        int x = (w / 2 - 78) + 13*i;
+        int y = (w / 2 - 14) + 6 - 69;
+            if (i==2) {
+                Vector a = {x, y};
+                Vector b = {x - 4, y + 17};
+                Vector c = {x + 4, y + 17};
+                Vector d = {x - 2, y + 9};
+                Vector e = {x + 2, y + 9};
+                vec_draw_line(a, b, WHITE);
+                vec_draw_line(a, c, WHITE);
+                vec_draw_line(d, e, WHITE);
+            }
+            if (i==3) {
+                Vector a = {x + 4, y - 1};
+                Vector b = {x - 4, y + 4 - 1};
+                Vector c = {x + 4, y + 13 - 1};
+                Vector d = {x - 4, y + 17 - 1};
+                vec_draw_line(a, b, WHITE);
+                vec_draw_line(b, c, WHITE);
+                vec_draw_line(c, d, WHITE);
+            }
+            if (i==4) {
+                Vector a = {x - 4, y};
+                Vector b = {x + 4, y};
+                Vector c = {x, y};
+                Vector d = {x, y + 17};
+                vec_draw_line(a, b, WHITE);
+                vec_draw_line(c, d, WHITE);
+            }
+            if (i==5) {
+                Vector a = {x - 4, y};
+                Vector b = {x + 4, y};
+                Vector c = {x - 4, y + 17};
+                Vector d = {x + 4, y + 17};
+                Vector e = {x - 4, y + 9};
+                Vector f = {x + 4, y + 9};
+                vec_draw_line(a, b, WHITE);
+                vec_draw_line(a, c, WHITE);
+                vec_draw_line(c, d, WHITE);
+                vec_draw_line(e, f, WHITE);
+            }
+            if (i==6) {
+                Vector a = {x - 4, y};
+                Vector b = {x - 4, y + 17};
+                Vector c = {x + 4, y + 4};
+                Vector d = {x - 4, y + 9};
+                Vector e = {x + 4, y + 17};
+                vec_draw_line(a, b, WHITE);
+                vec_draw_line(a, c, WHITE);
+                vec_draw_line(c, d, WHITE);
+                vec_draw_line(d, e, WHITE);
+            }
+            if (i==7) {
+                Vector a = {x - 4, y};
+                Vector b = {x + 4, y};
+                Vector c = {x - 4, y + 17};
+                Vector d = {x + 4, y + 17};
+                vec_draw_line(a, b, WHITE);
+                vec_draw_line(a, c, WHITE);
+                vec_draw_line(c, d, WHITE);
+                vec_draw_line(b, d, WHITE);
+            }
+            if (i==8) {
+                Vector a = {x, y};
+                Vector b = {x, y + 17};
+                vec_draw_line(a, b, WHITE);
+            }
+            if (i==9) {
+                Vector a = {x - 4, y};
+                Vector b = {x - 4, y + 17};
+                Vector c = {x + 4, y + 9};
+                vec_draw_line(a, b, WHITE);
+                vec_draw_line(a, c, WHITE);
+                vec_draw_line(c, b, WHITE);
+            }
+            if (i==10) {
+                Vector a = {x + 4, y - 1};
+                Vector b = {x - 4, y + 4 - 1};
+                Vector c = {x + 4, y + 13 - 1};
+                Vector d = {x - 4, y + 17 - 1};
+                vec_draw_line(a, b, WHITE);
+                vec_draw_line(b, c, WHITE);
+                vec_draw_line(c, d, WHITE);
+            }
+    }
 }
- */
+void clear_main_screen(Game* game) {
+    int i = 2;
+    int w = game->size.x;
+    int h = game->size.y;
+    int a = (w / 2 - 78);
+    int b = (w / 2 - 14 - 69);
+    int c = (w / 2 + 78);
+    int d = (w / 2 + 14 - 69);
+    Vector e = {a, b};
+    Vector f = {a, d};
+    Vector g = {c, b};
+    Vector j = {c, d};
+    vec_draw_line(e, f, BLACK);
+    vec_draw_line(e, g, BLACK);
+    vec_draw_line(j, g, BLACK);
+    vec_draw_line(j, f, BLACK);
+    for (i; i < 11; i++) {
+        int x = (w / 2 - 78) + 13*i;
+        int y = (w / 2 - 14) + 6 - 69;
+        if (i==2) {
+            Vector a = {x, y};
+            Vector b = {x - 4, y + 17};
+            Vector c = {x + 4, y + 17};
+            Vector d = {x - 2, y + 9};
+            Vector e = {x + 2, y + 9};
+            vec_draw_line(a, b, BLACK);
+            vec_draw_line(a, c, BLACK);
+            vec_draw_line(d, e, BLACK);
+        }
+        if (i==3) {
+            Vector a = {x + 4, y - 1};
+            Vector b = {x - 4, y + 4 - 1};
+            Vector c = {x + 4, y + 13 - 1};
+            Vector d = {x - 4, y + 17 - 1};
+            vec_draw_line(a, b, BLACK);
+            vec_draw_line(b, c, BLACK);
+            vec_draw_line(c, d, BLACK);
+        }
+        if (i==4) {
+            Vector a = {x - 4, y};
+            Vector b = {x + 4, y};
+            Vector c = {x, y};
+            Vector d = {x, y + 17};
+            vec_draw_line(a, b, BLACK);
+            vec_draw_line(c, d, BLACK);
+        }
+        if (i==5) {
+            Vector a = {x - 4, y};
+            Vector b = {x + 4, y};
+            Vector c = {x - 4, y + 17};
+            Vector d = {x + 4, y + 17};
+            Vector e = {x - 4, y + 9};
+            Vector f = {x + 4, y + 9};
+            vec_draw_line(a, b, BLACK);
+            vec_draw_line(a, c, BLACK);
+            vec_draw_line(c, d, BLACK);
+            vec_draw_line(e, f, BLACK);
+        }
+        if (i==6) {
+            Vector a = {x - 4, y};
+            Vector b = {x - 4, y + 17};
+            Vector c = {x + 4, y + 4};
+            Vector d = {x - 4, y + 9};
+            Vector e = {x + 4, y + 17};
+            vec_draw_line(a, b, BLACK);
+            vec_draw_line(a, c, BLACK);
+            vec_draw_line(c, d, BLACK);
+            vec_draw_line(d, e, BLACK);
+        }
+        if (i==7) {
+            Vector a = {x - 4, y};
+            Vector b = {x + 4, y};
+            Vector c = {x - 4, y + 17};
+            Vector d = {x + 4, y + 17};
+            vec_draw_line(a, b, BLACK);
+            vec_draw_line(a, c, BLACK);
+            vec_draw_line(c, d, BLACK);
+            vec_draw_line(b, d, BLACK);
+        }
+        if (i==8) {
+            Vector a = {x, y};
+            Vector b = {x, y + 17};
+            vec_draw_line(a, b, BLACK);
+        }
+        if (i==9) {
+            Vector a = {x - 4, y};
+            Vector b = {x - 4, y + 17};
+            Vector c = {x + 4, y + 9};
+            vec_draw_line(a, b, BLACK);
+            vec_draw_line(a, c, BLACK);
+            vec_draw_line(c, b, BLACK);
+        }
+        if (i==10) {
+            Vector a = {x + 4, y - 1};
+            Vector b = {x - 4, y + 4 - 1};
+            Vector c = {x + 4, y + 13 - 1};
+            Vector d = {x - 4, y + 17 - 1};
+            vec_draw_line(a, b, BLACK);
+            vec_draw_line(b, c, BLACK);
+            vec_draw_line(c, d, BLACK);
+        }
+    }
+}
+
+void game_over(Game* game) {
+    int i = 2;
+    int w = game->size.x;
+    int h = game->size.y;
+    int a = (w / 2 - 78);
+    int b = (w / 2 - 14 - 69);
+    int c = (w / 2 + 78);
+    int d = (w / 2 + 14 - 69);
+    Vector e = {a, b};
+    Vector f = {a, d};
+    Vector g = {c, b};
+    Vector j = {c, d};
+    vec_draw_line(e, f, WHITE);
+    vec_draw_line(e, g, WHITE);
+    vec_draw_line(j, g, WHITE);
+    vec_draw_line(j, f, WHITE);
+    for (i; i < 11; i++) {
+        int x = (w / 2 - 78) + 13*i;
+        int y = (w / 2 - 14) + 6 - 69;
+        if (i==2) { //G
+            Vector a = {x - 4, y};
+            Vector b = {x + 4, y};
+            Vector c = {x - 4, y + 17};
+            Vector d = {x + 4, y + 17};
+            Vector e = {x + 4, y + 8};
+            Vector f = {x, y + 8};
+            Vector g = {x + 4, y + 3};
+            vec_draw_line(a, b, WHITE);
+            vec_draw_line(a, c, WHITE);
+            vec_draw_line(b, g, WHITE);
+            vec_draw_line(c, d, WHITE);
+            vec_draw_line(d, e, WHITE);
+            vec_draw_line(e, f, WHITE);
+        }
+        if (i==3) { //A
+            Vector a = {x, y};
+            Vector b = {x - 4, y + 17};
+            Vector c = {x + 4, y + 17};
+            Vector d = {x - 2, y + 9};
+            Vector e = {x + 2, y + 9};
+            vec_draw_line(a, b, WHITE);
+            vec_draw_line(a, c, WHITE);
+            vec_draw_line(d, e, WHITE);
+        }
+        if (i==4) { //M
+            Vector a = {x - 4, y};
+            Vector b = {x - 4, y + 17};
+            Vector c = {x + 4, y};
+            Vector d = {x + 4, y + 17};
+            Vector e = {x, y + 8};
+            vec_draw_line(a, b, WHITE);
+            vec_draw_line(c, d, WHITE);
+            vec_draw_line(a, e, WHITE);
+            vec_draw_line(c, e, WHITE);
+        }
+        if (i==5) { //E
+            Vector a = {x - 4, y};
+            Vector b = {x + 4, y};
+            Vector c = {x - 4, y + 17};
+            Vector d = {x + 4, y + 17};
+            Vector e = {x - 4, y + 9};
+            Vector f = {x + 4, y + 9};
+            vec_draw_line(a, b, WHITE);
+            vec_draw_line(a, c, WHITE);
+            vec_draw_line(c, d, WHITE);
+            vec_draw_line(e, f, WHITE);
+        }
+        if (i==7) { //O
+            Vector a = {x - 4, y};
+            Vector b = {x + 4, y};
+            Vector c = {x - 4, y + 17};
+            Vector d = {x + 4, y + 17};
+            vec_draw_line(a, b, WHITE);
+            vec_draw_line(a, c, WHITE);
+            vec_draw_line(c, d, WHITE);
+            vec_draw_line(b, d, WHITE);
+        }
+        if (i==8) { //V
+            Vector a = {x - 4, y};
+            Vector b = {x + 4, y};
+            Vector c = {x, y + 17};
+            vec_draw_line(a, c, WHITE);
+            vec_draw_line(b, c, WHITE);
+        }
+        if (i==9) { //E
+            Vector a = {x - 4, y};
+            Vector b = {x + 4, y};
+            Vector c = {x - 4, y + 17};
+            Vector d = {x + 4, y + 17};
+            Vector e = {x - 4, y + 9};
+            Vector f = {x + 4, y + 9};
+            vec_draw_line(a, b, WHITE);
+            vec_draw_line(a, c, WHITE);
+            vec_draw_line(c, d, WHITE);
+            vec_draw_line(e, f, WHITE);
+        }
+        if (i==10) { //R
+            Vector a = {x - 4, y};
+            Vector b = {x - 4, y + 17};
+            Vector c = {x + 4, y + 4};
+            Vector d = {x - 4, y + 9};
+            Vector e = {x + 4, y + 17};
+            vec_draw_line(a, b, WHITE);
+            vec_draw_line(a, c, WHITE);
+            vec_draw_line(c, d, WHITE);
+            vec_draw_line(d, e, WHITE);
+        }
+    }
+}
+void clear_game_over(Game* game) {
+    int i = 2;
+    int w = game->size.x;
+    int h = game->size.y;
+    int a = (w / 2 - 78);
+    int b = (w / 2 - 14);
+    int c = (w / 2 + 78);
+    int d = (w / 2 + 14);
+    Vector e = {a, b};
+    Vector f = {a, d};
+    Vector g = {c, b};
+    Vector j = {c, d};
+    vec_draw_line(e, f, BLACK);
+    vec_draw_line(e, g, BLACK);
+    vec_draw_line(j, g, BLACK);
+    vec_draw_line(j, f, BLACK);
+    for (i; i < 11; i++) {
+        int x = (w / 2 - 78) + 13*i;
+        int y = (w / 2 - 14) + 6;
+        if (i==2) { //G
+            Vector a = {x - 4, y};
+            Vector b = {x + 4, y};
+            Vector c = {x - 4, y + 17};
+            Vector d = {x + 4, y + 17};
+            Vector e = {x + 4, y + 8};
+            Vector f = {x, y + 8};
+            Vector g = {x + 4, y + 3};
+            vec_draw_line(a, b, BLACK);
+            vec_draw_line(a, c, BLACK);
+            vec_draw_line(b, g, BLACK);
+            vec_draw_line(c, d, BLACK);
+            vec_draw_line(d, e, BLACK);
+            vec_draw_line(e, f, BLACK);
+        }
+        if (i==3) { //A
+            Vector a = {x, y};
+            Vector b = {x - 4, y + 17};
+            Vector c = {x + 4, y + 17};
+            Vector d = {x - 2, y + 9};
+            Vector e = {x + 2, y + 9};
+            vec_draw_line(a, b, BLACK);
+            vec_draw_line(a, c, BLACK);
+            vec_draw_line(d, e, BLACK);
+        }
+        if (i==4) { //M
+            Vector a = {x - 4, y};
+            Vector b = {x - 4, y + 17};
+            Vector c = {x + 4, y};
+            Vector d = {x + 4, y + 17};
+            Vector e = {x, y + 8};
+            vec_draw_line(a, b, BLACK);
+            vec_draw_line(c, d, BLACK);
+            vec_draw_line(a, e, BLACK);
+            vec_draw_line(c, e, BLACK);
+        }
+        if (i==5) { //E
+            Vector a = {x - 4, y};
+            Vector b = {x + 4, y};
+            Vector c = {x - 4, y + 17};
+            Vector d = {x + 4, y + 17};
+            Vector e = {x - 4, y + 9};
+            Vector f = {x + 4, y + 9};
+            vec_draw_line(a, b, BLACK);
+            vec_draw_line(a, c, BLACK);
+            vec_draw_line(c, d, BLACK);
+            vec_draw_line(e, f, BLACK);
+        }
+        if (i==7) { //O
+            Vector a = {x - 4, y};
+            Vector b = {x + 4, y};
+            Vector c = {x - 4, y + 17};
+            Vector d = {x + 4, y + 17};
+            vec_draw_line(a, b, BLACK);
+            vec_draw_line(a, c, BLACK);
+            vec_draw_line(c, d, BLACK);
+            vec_draw_line(b, d, BLACK);
+        }
+        if (i==8) { //V
+            Vector a = {x - 4, y};
+            Vector b = {x + 4, y};
+            Vector c = {x, y + 17};
+            vec_draw_line(a, c, BLACK);
+            vec_draw_line(b, c, BLACK);
+        }
+        if (i==9) { //E
+            Vector a = {x - 4, y};
+            Vector b = {x + 4, y};
+            Vector c = {x - 4, y + 17};
+            Vector d = {x + 4, y + 17};
+            Vector e = {x - 4, y + 9};
+            Vector f = {x + 4, y + 9};
+            vec_draw_line(a, b, BLACK);
+            vec_draw_line(a, c, BLACK);
+            vec_draw_line(c, d, BLACK);
+            vec_draw_line(e, f, BLACK);
+        }
+        if (i==10) { //R
+            Vector a = {x - 4, y};
+            Vector b = {x - 4, y + 17};
+            Vector c = {x + 4, y + 4};
+            Vector d = {x - 4, y + 9};
+            Vector e = {x + 4, y + 17};
+            vec_draw_line(a, b, BLACK);
+            vec_draw_line(a, c, BLACK);
+            vec_draw_line(c, d, BLACK);
+            vec_draw_line(d, e, BLACK);
+        }
+    }
+}
+
 void draw_lives(Game* game) {
     int i = 0;
     Ship ship = {
@@ -648,7 +1093,7 @@ void init_game(Game* game) {
     game->size = SCREEN_SIZE;
     game->asteroidHead = NULL; 
     game->bulletHead = NULL;
-
+    game->gamecode = 0;
     reset_game(game);
 
     // set the asteroid model
@@ -659,8 +1104,6 @@ void init_game(Game* game) {
         asteroidModel[i].x = rad * cos(angle);
         asteroidModel[i].y = rad * sin(angle);
     }
-
-
     // add asteroids
     add_random_asteroids(game, nASTEROIDS);
 }
@@ -692,12 +1135,14 @@ void update_game(Game* game) {
 }
 
 void draw_game(Game *game) {
-    draw_asteroids(game->asteroidHead);
-    draw_bullets(game->bulletHead);
-    draw_ship(&game->player, SHIP_COLOR);
-    /* to be implemented */
-    // draw_score(game->score);
-    draw_lives(game);
+    //game->state = 0;
+
+        draw_asteroids(game->asteroidHead);
+        draw_bullets(game->bulletHead);
+        draw_ship(&game->player, SHIP_COLOR);
+        draw_lives(game);
+        /* to be implemented */
+        // draw_score(game->score);
 }
 
 int get_key_pressed() {
@@ -849,6 +1294,9 @@ bool check_collision(Game* game, Asteroid* a) {
         if (point_in_asteroid(a, nASTEROID_VERTICES, game->player.vertices[i])) {
             // update lives
             game->lives -= 1;
+            if (game->lives == 0) {
+                game->state = -1;
+            }
             // reset ship
             // may need to change this logic in case the user dies at the center of the screen
             reset_ship(game);
