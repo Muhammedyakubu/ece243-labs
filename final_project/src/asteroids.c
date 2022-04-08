@@ -398,7 +398,7 @@ int main(void)
             // time taken for draw
             now = clock();
             float dt = (float)(now - last_drawn) / CLOCKS_PER_SEC;
-            printf("seconds per frame: %f, fps: %f\n", dt, 1.0/dt);
+            // printf("seconds per frame: %f, fps: %f\n", dt, 1.0/dt);
             last_drawn = now;
         }
         //draw_game_over(&game);
