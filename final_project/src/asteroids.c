@@ -37,16 +37,6 @@
 #define RESOLUTION_X 320
 #define RESOLUTION_Y 240
 
-#define KEY_NONE 0 // No key pressed
-#define KEY_TAB 0x0D //keyboard TAB
-#define KEY_R 0x2D //keyboard R
-#define KEY_RIGHT 116 // Keyboard Right Arrow
-#define KEY_LEFT 107 // Keyboard Left Arrow
-#define KEY_DOWN 114 // Keyboard Down Arrow
-#define KEY_UP 117 // Keyboard Up Arrow
-#define KEY_SPACE 41 // Keyboard Spacebar
-#define KEY_ESC 0x76 // Keyboard Esc
-
 #define PS2_BASE              0xFF200100
 
 /******************************************************************************
@@ -91,6 +81,16 @@ Vector rotate(Vector, float);
 
 //================== K E Y S ==================//
 
+#define KEY_NONE 0 // No key pressed
+#define KEY_TAB 0x0D //keyboard TAB
+#define KEY_R 0x2D //keyboard R
+#define KEY_RIGHT 116 // Keyboard Right Arrow
+#define KEY_LEFT 107 // Keyboard Left Arrow
+#define KEY_DOWN 114 // Keyboard Down Arrow
+#define KEY_UP 117 // Keyboard Up Arrow
+#define KEY_SPACE 41 // Keyboard Spacebar
+#define KEY_ESC 0x76 // Keyboard Esc
+
 #define UP 0
 #define DOWN 1
 #define LEFT 2
@@ -104,7 +104,7 @@ Vector rotate(Vector, float);
 
 typedef struct Key
 {
-    int code;
+    char code;
     bool is_down;
 } Key;
 
@@ -130,9 +130,9 @@ Key keys[] =
 #define SHIP_LENGTH 10
 #define SHIP_WIDTH 8 * SHIP_SCALE
 
-#define SHIP_ROTATION_SPEED M_PI/24 // fine tune later
+#define SHIP_ROTATION_SPEED M_PI/20 // fine tune later
 #define SHIP_FRICTION 0.55
-#define SHIP_ACCELERATION 210
+#define SHIP_ACCELERATION 150
 #define SHIP_MAX_SPEED 170  // based on real game speed
 
 typedef struct Ship {
@@ -283,9 +283,11 @@ void update_game(Game*);
 void reset_ship(Game*);
 
 
-int get_key_pressed();
+void reset_keys();
 
-void handle_key_press(Game*, int);
+void update_pressed_keys();
+
+void handle_pressed_keys(Game*);
 
 
 void insert_asteroid(Game*, Asteroid*);
@@ -303,8 +305,9 @@ bool check_collision(Game* game, Asteroid* a);
 void add_random_asteroids(Game*, int);
 
 
-/* to be implemented (ankur) */
-// Bullet *new_bullet(Vector p, float angle);
+Bullet *new_bullet(Vector p, float angle);
+
+void shoot_bullet(Game*);
 
 void insert_bullet(Game*, Bullet*);
 
@@ -354,27 +357,45 @@ Vector rand_vec(Game *game);
 
 //================== G L O B A L S ==================//
 
+// DEBUGGING DEFINES
+
 #define CLEAR_FAST
+// #define PRINT_KEYS
+
+
+
+
 volatile int pixel_buffer_start; // global variable
 
+// initialize time increment
 float dt = 1.0/FPS;
+
+// the main game object
 Game game;
+
+// bullet cooldown
 double b_cooldown = 0.2;
+
+// north vector for calculations
 const Vector NORTH = {0, -1};
+
+// for processing ps2 input
+char byte1 = 0, byte2 = 0, byte3 = 0;
+
 
 
 //================== M O D E L S ==================//
 
 const Vector playerModel[] = 
 {
-    {0, 0},
-    {4, 0},
-    {0, -10},
-    {-4, 0},
-    {0, 0},
-    {-2, 2},
-    {0, 6},
-    {2, 2},
+    {0, 2},
+    {4, 2},
+    {0, -8},
+    {-4, 2},
+    {0, 2},
+    {-2, 4},
+    {0, 10},
+    {2, 4},
 };
 
 Vector asteroidModel[nASTEROID_VERTICES];
@@ -421,8 +442,9 @@ int main(void)
         main_screen(&game);
         wait_for_vsync(); // swap front and back buffers on VGA vertical sync
 
-        while (key_pressed != KEY_TAB) {
-            key_pressed = get_key_pressed();
+        while (!keys[TAB].is_down) {
+            update_pressed_keys();
+            // key_pressed = get_key_pressed();
         }
 
         clear_screen();
@@ -448,13 +470,6 @@ int main(void)
             // draw all objects
             draw_game(&game);
 
-
-            /* // read ps2 last byte
-            key_pressed = get_key_pressed();
-            // printf("%d\n", key_pressed);
-
-            handle_key_press(&game, key_pressed); */
-
             // new handle key press
             update_pressed_keys();
             handle_pressed_keys(&game);
@@ -465,7 +480,7 @@ int main(void)
             // time taken for draw
             now = clock();
             dt = (float)(now - last_drawn) / CLOCKS_PER_SEC;
-            // printf("seconds per frame: %f, fps: %f\n", dt, 1.0/dt);
+            printf("seconds per frame: %f, fps: %f\n", dt, 1.0/dt);
             last_drawn = now;
         }
 
@@ -476,17 +491,14 @@ int main(void)
 
         wait_for_vsync(); // swap front and back buffers on VGA vertical sync
 
-        while (key_pressed != KEY_TAB) {
-            key_pressed = get_key_pressed();
+        while (!keys[TAB].is_down) {
+            update_pressed_keys();
         }
 
         reset_game(&game);
 
         clear_screen();
         pixel_buffer_start = *(pixel_ctrl_ptr + 1); // new back buffer
-
-        // reset key_pressed
-        key_pressed = KEY_NONE;
     }
     return 0;
 }
@@ -1371,6 +1383,7 @@ void init_game(Game* game) {
 }
 
 void reset_game(Game* game) {
+    reset_keys();
     reset_ship(game);
 
     delete_asteroid_list(game);
@@ -1387,6 +1400,13 @@ void reset_ship(Game* game) {
     transform_model(game->player.vertices, playerModel, nSHIP_VERTICES_THRUST, 
                     game->player.position, game->player.angle, SHIP_SCALE);
     game->player.thrusting = false;
+}
+
+void reset_keys() {
+    int i = 0;
+    for (; i < nKEYS; i++) {
+        keys[i].is_down = false;
+    }
 }
 
 void update_game(Game* game) {
@@ -1410,42 +1430,14 @@ void delay(int seconds) {
     }
 }
 
-int get_key_pressed() {
-    volatile int* PS2_ptr = (int*)PS2_BASE;
-    int PS2_data, RVALID;
-    char byte1 = 0, byte2 = 0, byte3 = 0;
-
-    // save the last three bytes
-    for (int i = 0; i < 3; i++) {
-        PS2_data = *(PS2_ptr); // read the Data register in the PS/2 port
-        RVALID = PS2_data & 0x8000; // extract the RVALID field
-
-        if (!RVALID) continue;
-
-        byte1 = byte2;      
-        byte2 = byte3;
-        byte3 = PS2_data & 0xFF;
-
-    }
-
-    // printf("%x %x %x\n", byte1, byte2, byte3);
-    // probably not fully correct, but it works
-    if (byte2 != 0xF0) 
-        return byte3;
-    else if (byte1 != 0xF0)
-        return byte2;
-    else 
-        return KEY_NONE;
-}
-
 void update_pressed_keys() {
     volatile int* PS2_ptr = (int*)PS2_BASE;
     int PS2_data, RVALID;
-    char byte1 = 0, byte2 = 0, byte3 = 0;
+    // char byte1 = 0, byte2 = 0, byte3 = 0;
     bool updated = false;
 
     // save the last three bytes
-    /* for (int i = 0; i < 3 && !updated; i++) {
+    for (int i = 0; i < 3 && !updated; i++) {
         PS2_data = *(PS2_ptr); // read the Data register in the PS/2 port
         RVALID = PS2_data & 0x8000; // extract the RVALID field
 
@@ -1460,45 +1452,24 @@ void update_pressed_keys() {
         for (int i = 0; i < nKEYS; i++) {
             if (byte3 == keys[i].code) {
                 updated = true;
+
                 if (byte2 == 0xF0) {
                     keys[i].is_down = false;
+                    #ifdef PRINT_KEYS
                     printf("released %x\n", keys[i].code);
+                    #endif
                 }
                 else {
                     keys[i].is_down = true;
+                    #ifdef PRINT_KEYS
                     printf("pressed %x\n", keys[i].code);
+                    #endif
                 }
                 break;
             }
         }
 
     }
- */
-    // try reading all input 
-    do {
-        PS2_data = *(PS2_ptr); // read the Data register in the PS/2 port
-        RVALID = PS2_data & 0x8000; // extract the RVALID field
-
-        byte1 = byte2;      
-        byte2 = byte3;
-        byte3 = PS2_data & 0xFF;
-
-        for (int i = 0; i < nKEYS; i++) {
-            if (byte3 == keys[i].code) {
-                // updated = true;
-                if (byte2 == 0xF0) {
-                    keys[i].is_down = false;
-                    printf("released %x\n", keys[i].code);
-                }
-                else {
-                    keys[i].is_down = true;
-                    printf("pressed %x\n", keys[i].code);
-                }
-                // break;
-            }
-        }
-
-    }   while (RVALID);
 }
 
 void shoot_bullet(Game* game) {
@@ -1550,46 +1521,6 @@ void handle_pressed_keys(Game* game) {
     b_cooldown -= dt;
 }
 
-void handle_key_press(Game* game, int key_pressed) {
-
-
-    if (key_pressed == KEY_RIGHT)
-    {
-    }
-    else if (key_pressed == KEY_LEFT)
-    {
-        rotate_ship_left(&game->player);
-    }
-    else if (key_pressed == KEY_UP)
-    {
-        // accelerate_ship(&game->player);
-        game->player.thrusting = true;
-    }
-    else if (key_pressed == KEY_DOWN)
-    {   
-        // hyper space
-        game->player.position = rand_vec(game);
-    }
-    else if (key_pressed == KEY_ESC)
-    {
-        game->running = false;
-    }
-    else if (key_pressed == KEY_SPACE && b_cooldown <= 0)
-    {
-        // shoot bullet from the tip of the ship
-        Bullet *b = new_bullet(game->player.vertices[2], game->player.angle);
-        b->velocity = vec_add(game->player.velocity, b->velocity);
-        insert_bullet(game, b);
-
-        // player recoil from shooting bullet
-        Vector recoil = vec_mul(b->velocity, -0.01);
-        game->player.position = vec_add(game->player.position, recoil);
-
-        // reset cooldown
-        b_cooldown = 0.2; 
-    }
-    b_cooldown -= dt;
-}
 
 void insert_asteroid(Game* game, Asteroid* a){
     if(game->asteroidHead) 
