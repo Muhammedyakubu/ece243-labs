@@ -101,7 +101,7 @@ Vector rotate(Vector, float);
 
 #define SHIP_ROTATION_SPEED M_PI/10 // fine tune later
 #define SHIP_FRICTION 0.55
-#define SHIP_ACCELERATION 170
+#define SHIP_ACCELERATION 210
 #define SHIP_MAX_SPEED 170  // based on real game speed
 
 typedef struct Ship {
@@ -1366,6 +1366,12 @@ void draw_game(Game *game) {
     draw_score(game);
 }
 
+void delay(int seconds) {
+    while (seconds > 0) {
+        seconds -= dt;
+    }
+}
+
 int get_key_pressed() {
     volatile int* PS2_ptr = (int*)PS2_BASE;
     int PS2_data, RVALID;
@@ -1383,6 +1389,8 @@ int get_key_pressed() {
         byte3 = PS2_data & 0xFF;
 
     }
+
+    // printf("%x %x %x\n", byte1, byte2, byte3);
     // probably not fully correct, but it works
     if (byte2 != 0xF0) 
         return byte3;
@@ -1518,7 +1526,7 @@ bool check_collision(Game* game, Asteroid* a) {
     // check collision with each bullet
     Bullet* b = game->bulletHead;
     for (; b != NULL; b = b->next) {
-        if (point_in_asteroid(a, nASTEROID_VERTICES, b->position)) {
+        if (b->alive && point_in_asteroid(a, nASTEROID_VERTICES, b->position)) {
             // delete bullet
             #ifdef CLEAR_FAST
             b->alive = false;
