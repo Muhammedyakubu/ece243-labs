@@ -572,10 +572,68 @@ void draw_bullets(Bullet* bullets) {
 //================== G A M E ==================//
 
 void main_screen(Game* game) {
-    Vector temp = {}
-    Vector a = {(game->size.x) / 3, (game->size.y / 4)}
-            vec_sub(game->size, )
-    vec_draw_line(Vector a, Vector b, short int color);
+    int i = 2;
+    int w = game->size.x;
+    int h = game->size.y;
+    int a = (w/2 - 78);
+    int b = (w/2 - 14);
+    int c = (w/2 + 78);
+    int d = (w/2 + 14);
+    vec_draw_line({a, b}, {a, d}, WHITE);
+    vec_draw_line({a, b}, {c, b}, WHITE);
+    vec_draw_line({c, d}, {c, b}, WHITE);
+    vec_draw_line({c, d}, {a, d}, WHITE);
+    for (i; i < 11; i++) {
+        int x = (w/2 - 78) + 13i;
+        int y = (w/2 - 14) + 6;
+        switch (i) {
+            case 2:
+                vec_draw_line({x, y}, {x-4, y+17}, WHITE);
+                vec_draw_line({x, y}, {x+4, y+17}, WHITE);
+                vec_draw_line({x-2, y+9}, {x+2, y+9}, WHITE);
+                break;
+            case 3:
+                vec_draw_line({x+4, y}, {x-4, y+4}, WHITE);
+                vec_draw_line({x-4, y+4}, {x+4, y+13}, WHITE);
+                vec_draw_line({x+4, y+13}, {x-4, y+17}, WHITE);
+                break;
+            case 4:
+                vec_draw_line({x-4, y}, {x+4, y}, WHITE);
+                vec_draw_line({x, y}, {x, y+17}, WHITE);
+                break;
+            case 5:
+                vec_draw_line({x-4, y}, {x+4, y}, WHITE);
+                vec_draw_line({x-4, y}, {x-4, y+17}, WHITE);
+                vec_draw_line({x-4, y+17}, {x+4, y+17}, WHITE);
+                vec_draw_line({x-4, y+9}, {x+4, y+9}, WHITE);
+                break;
+            case 6:
+                vec_draw_line({x-4, y}, {x-4, y+17}, WHITE);
+                vec_draw_line({x-4, y}, {x+4, y+4}, WHITE);
+                vec_draw_line({x+4, y+4}, {x-4, y+9}, WHITE);
+                vec_draw_line({x-4, y+9}, {x+4, y+17}, WHITE);
+                break;
+            case 7:
+                vec_draw_line({x-4, y}, {x+4, y}, WHITE);
+                vec_draw_line({x-4, y}, {x-4, y+17}, WHITE);
+                vec_draw_line({x-4, y+17}, {x+4, y+17}, WHITE);
+                vec_draw_line({x+4, y}, {x+4, y+17}, WHITE);
+                break;
+            case 8:
+                vec_draw_line({x, y}, {x, y+17}, WHITE);
+                break;
+            case 9:
+                vec_draw_line({x-4, y}, {x-4, y+17}, WHITE);
+                vec_draw_line({x-4, y}, {x+4, y+9}, WHITE);
+                vec_draw_line({x+4, y+9}, {x-4, y+17}, WHITE);
+                break;
+            case 10:
+                vec_draw_line({x+4, y}, {x-4, y+4}, WHITE);
+                vec_draw_line({x-4, y+4}, {x+4, y+13}, WHITE);
+                vec_draw_line({x+4, y+13}, {x-4, y+17}, WHITE);
+                break;
+        }
+    }
 }
 
 void draw_lives(Game* game) {
@@ -652,6 +710,7 @@ void draw_game(Game *game) {
     /* to be implemented */
     // draw_score(game->score);
     draw_lives(game);
+    main_screen(game);
 }
 
 int get_key_pressed() {
