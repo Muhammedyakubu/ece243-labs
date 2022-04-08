@@ -97,9 +97,9 @@ Vector rotate(Vector, float);
 #define SHIP_WIDTH 8
 
 #define SHIP_ROTATION_SPEED M_PI/16 // fine tune later
-#define SHIP_FRICTION 0.4
+#define SHIP_FRICTION 0.6
 #define SHIP_ACCELERATION 30
-#define SHIP_MAX_SPEED 170  // based on real game speed
+#define SHIP_MAX_SPEED 250  // based on real game speed
 
 typedef struct Ship {
     // The position of the ship
@@ -174,7 +174,7 @@ void draw_asteroids(Asteroid*);
 
 //================== B U L L E T ==================//
 
-#define BULLET_SPEED 170
+#define BULLET_SPEED 200
 #define BULLET_SIZE 2
 #define BULLET_COLOR CYAN
 
@@ -398,7 +398,7 @@ int main(void)
             // time taken for draw
             now = clock();
             float dt = (float)(now - last_drawn) / CLOCKS_PER_SEC;
-            // printf("seconds per frame: %f, fps: %f\n", dt, 1.0/dt);
+            printf("seconds per frame: %f, fps: %f\n", dt, 1.0/dt);
             last_drawn = now;
         }
         //draw_game_over(&game);
@@ -497,8 +497,10 @@ void update_ship(Ship *ship) {
         vec_add(ship->position, vec_mul(ship->velocity, dt))
     );
     // add some friction to the ship
-    ship->velocity = vec_mul(ship->velocity, (pow(1 - SHIP_FRICTION, dt)));    
-    printf("ship velocity: %f %f\n", ship->velocity.x, ship->velocity.y );
+    // ship->velocity = vec_mul(ship->velocity, (pow(1 - SHIP_FRICTION, dt)));   
+    Vector incr = vec_mul(ship->velocity, dt * SHIP_FRICTION);
+    ship->velocity = vec_sub(ship->velocity, incr);    
+    // printf("ship velocity: %f %f\n", ship->velocity.x, ship->velocity.y );
 
 }
 
@@ -949,8 +951,10 @@ void vec_plot_pixel(Vector v, short int line_color)
 void plot_pixel(int x, int y, short int line_color)
 {
     // if pixel not in bounds, wrap around
-    x = (x + RESOLUTION_X) % RESOLUTION_X;
-    y = (y + RESOLUTION_Y) % RESOLUTION_Y;
+    while (x < 0) x += RESOLUTION_X;
+    x = x % RESOLUTION_X;
+    while (y < 0) y += RESOLUTION_Y;
+    y = y % RESOLUTION_Y;    
 
     *(short int *)(pixel_buffer_start + (y << 10) + (x << 1)) = line_color;
 }
