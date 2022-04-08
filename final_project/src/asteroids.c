@@ -56,7 +56,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <stdbool.h>
-
+#include <time.h>
 
 
 /******************************************************************************
@@ -92,11 +92,14 @@ Vector rotate(Vector, float);
 
 #define nSHIP_VERTICES 4
 #define SHIP_COLOR CYAN
+#define SHIP_SCALE 1
+#define SHIP_LENGTH 10
+#define SHIP_WIDTH 8
 
 #define SHIP_ROTATION_SPEED M_PI/16 // fine tune later
 #define SHIP_FRICTION 0.18
 #define SHIP_ACCELERATION 30
-#define SHIP_MAX_SPEED 10   // fine tune later
+#define SHIP_MAX_SPEED 170  // based on real game speed
 
 typedef struct Ship {
     // The position of the ship
@@ -130,7 +133,9 @@ void draw_ship(Ship *, short int);
 #define MAX_ASTEROID_RADIUS 24
 #define MIN_ASTEROID_RADIUS 6
 
-#define ASTEROID_MIN_SPEED 5
+#define ASTEROID_MIN_SPEED 40
+#define ASTEROID_MAX_SPEED 65
+#define ASTEROID_SPEED_INCR 12.5
 
 #define nASTEROID_VERTICES 12
 #define nASTEROIDS 4
@@ -169,7 +174,7 @@ void draw_asteroids(Asteroid*);
 
 //================== B U L L E T ==================//
 
-#define BULLET_SPEED 30
+#define BULLET_SPEED 170
 #define BULLET_SIZE 2
 #define BULLET_COLOR CYAN
 
@@ -268,6 +273,8 @@ void update_bullets(Game*);
 
 void draw_game(Game*);
 
+void draw_lives(Game*);
+
 
 //================== R E N D E R I N G   &   G R A P H I C S ==================//
 
@@ -354,6 +361,8 @@ int main(void)
     int key_pressed = KEY_NONE;
 
     init_game(&game);
+    clock_t last_drawn, now;
+    last_drawn = clock();
     while (1) {
         //while (game->lives > 0)
         while (1)
@@ -384,6 +393,12 @@ int main(void)
 
             wait_for_vsync(); // swap front and back buffers on VGA vertical sync
             pixel_buffer_start = *(pixel_ctrl_ptr + 1); // new back buffer
+
+            // time to draw
+            now = clock();
+            float time_elapsed = (float)(now - last_drawn) / CLOCKS_PER_SEC;
+            printf("seconds per frame: %f, fps: %f\n", time_elapsed, 1.0/time_elapsed);
+            last_drawn = now;
         }
         //draw_game_over(&game);
     }
@@ -571,22 +586,22 @@ void draw_bullets(Bullet* bullets) {
 
 //================== G A M E ==================//
 
-void main_screen(Game* game) {
-    Vector temp = {}
+/* void main_screen(Game* game) {
+    Vector temp = {};
     Vector a = {(game->size.x) / 3, (game->size.y / 4)}
             vec_sub(game->size, )
     vec_draw_line(Vector a, Vector b, short int color);
 }
-
+ */
 void draw_lives(Game* game) {
     int i = 0;
     Ship ship;
-    for (i; i < game->lives; i++) {
+    for (; i < game->lives; i++) {
         Vector temp;
-        temp.x = 6 + 8 * i;
+        temp.x = 6 + SHIP_WIDTH * i;
         temp.y = 7;
         ship.position = vec_sub(game->size, temp);
-        draw_ship(&ship, PURPLE);
+        draw_ship(&ship, MAGENTA);
     }
 }
 
@@ -816,7 +831,7 @@ void split_asteroid(Game* game, Asteroid* a) {
         float size = a->radius/2;
         // results in a speed proportional to the asteroids' size
         Vector speed = vec_mul(NORTH, 
-                                ASTEROID_MIN_SPEED * (5 - (log(size) / log(2))));
+                                ASTEROID_MIN_SPEED + size * ASTEROID_SPEED_INCR);
                                 
         Asteroid *a_new = new_asteroid(
                 a->position,
