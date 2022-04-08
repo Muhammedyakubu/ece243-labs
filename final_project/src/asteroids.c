@@ -99,7 +99,7 @@ Vector rotate(Vector, float);
 #define SHIP_LENGTH 10
 #define SHIP_WIDTH 8 * SHIP_SCALE
 
-#define SHIP_ROTATION_SPEED M_PI/12 // fine tune later
+#define SHIP_ROTATION_SPEED M_PI/10 // fine tune later
 #define SHIP_FRICTION 0.55
 #define SHIP_ACCELERATION 170
 #define SHIP_MAX_SPEED 170  // based on real game speed
@@ -1383,7 +1383,7 @@ int get_key_pressed() {
         byte3 = PS2_data & 0xFF;
 
     }
-
+    // probably not fully correct, but it works
     if (byte2 != 0xF0) 
         return byte3;
     else if (byte1 != 0xF0)
