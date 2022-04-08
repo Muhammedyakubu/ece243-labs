@@ -100,7 +100,7 @@ Vector rotate(Vector, float);
 
 #define SHIP_ROTATION_SPEED M_PI/12 // fine tune later
 #define SHIP_FRICTION 0.55
-#define SHIP_ACCELERATION 17
+#define SHIP_ACCELERATION 170
 #define SHIP_MAX_SPEED 170  // based on real game speed
 
 typedef struct Ship {
@@ -144,6 +144,8 @@ void draw_ship(Ship *, short int);
 #define nASTEROIDS 4
 
 #define ASTEROID_COLOR YELLOW
+
+#define ASTEROID_MIN_SCORE 25
 
 struct Asteroid {
     // The position of the asteroid
@@ -378,7 +380,6 @@ int main(void)
     clock_t last_drawn, now;
     last_drawn = clock();
     while (1) {
-        //while (game->lives > 0)
         clear_screen();
         main_screen(&game);
         wait_for_vsync(); // swap front and back buffers on VGA vertical sync
@@ -386,11 +387,12 @@ int main(void)
         while (key_pressed != KEY_TAB) {
             key_pressed = get_key_pressed();
         }
-        clear_main_screen(&game);
+
         clear_screen();
-        pixel_buffer_start = *(pixel_ctrl_ptr + 1); // new back buffer
-        //clear_screen();
+        wait_for_vsync(); // swap front and back buffers on VGA vertical sync
+
         init_game(&game);
+
         while (game.lives > 0)
         {
             // indicate that game is running
@@ -423,19 +425,25 @@ int main(void)
             // time taken for draw
             now = clock();
             dt = (float)(now - last_drawn) / CLOCKS_PER_SEC;
-            // printf("seconds per frame: %f, fps: %f\n", dt, 1.0/dt);
+            printf("seconds per frame: %f, fps: %f\n", dt, 1.0/dt);
             last_drawn = now;
         }
+
         clear_screen();
+
         game_over(&game);
         draw_score(&game);
+
         wait_for_vsync(); // swap front and back buffers on VGA vertical sync
+
         while (key_pressed != KEY_TAB) {
             key_pressed = get_key_pressed();
         }
-        key_pressed = KEY_NONE;
+
         clear_screen();
         pixel_buffer_start = *(pixel_ctrl_ptr + 1); // new back buffer
+
+        key_pressed = KEY_NONE;
     }
     return 0;
 }
@@ -519,7 +527,7 @@ void bound_speed(Ship *ship) {
 void accelerate_ship(Ship* ship) {
     ship->velocity = vec_add(ship->velocity, 
                             vec_mul(rotate(NORTH, ship->angle), 
-                                    SHIP_ACCELERATION));
+                                    SHIP_ACCELERATION * dt));
     bound_speed(ship);
     // printf("%f %f\n", ship->velocity.x, ship->velocity.y);
 }
@@ -1154,24 +1162,12 @@ void clear_score(int position) {
 
 void draw_score(Game* game) {
     int a = game->score;
-    int first = (int) a / 100000;
-    clear_score(0);
-    draw_number(0, first);
-    int second = (int) (a - first*100000) / 10000;
-    clear_score(1);
-    draw_number(1, second);
-    int third = (int) (a - first*100000 - second*10000) / 1000;
-    clear_score(2);
-    draw_number(2, third);
-    int fourth = (int) (a - first*100000 - second*10000 - third*1000) / 100;
-    clear_score(3);
-    draw_number(3, fourth);
-    int fifth = (int) (a - first*100000 - second*10000 - third*1000 - fourth*100) / 10;
-    clear_score(4);
-    draw_number(4, fifth);
-    int sixth = (int) (a - first*100000 - second*10000 - third*1000 - fourth*100 - fifth*10);
-    clear_score(5);
-    draw_number(5, sixth);
+    for (int i = 5; i >= 0; i--) {
+        int b = a % 10;
+        a = a / 10;
+        clear_score(i);
+        draw_number(i, b);
+    }
 }
 
 
@@ -1246,13 +1242,11 @@ void update_game(Game* game) {
 }
 
 void draw_game(Game *game) {
-    //game->state = 0;
-
-        draw_asteroids(game->asteroidHead);
-        draw_bullets(game->bulletHead);
-        draw_ship(&game->player, SHIP_COLOR);
-        draw_lives(game);
-        draw_score(game);
+    draw_asteroids(game->asteroidHead);
+    draw_bullets(game->bulletHead);
+    draw_ship(&game->player, SHIP_COLOR);
+    draw_lives(game);
+    draw_score(game);
 }
 
 int get_key_pressed() {
@@ -1299,7 +1293,7 @@ void handle_key_press(Game* game, int key_pressed) {
                 game,
                 b
         );
-        
+
         Vector recoil = vec_mul(b->velocity, -0.01);
         game->player.position = vec_add(game->player.position, recoil);
 
@@ -1400,7 +1394,7 @@ bool check_collision(Game* game, Asteroid* a) {
             delete_bullet(game, b);
             #endif
             // update score
-            game->score += 1;
+            game->score += ASTEROID_MIN_SCORE * MAX_ASTEROID_RADIUS/a->radius;
             return true;
         }
     }
