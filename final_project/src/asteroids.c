@@ -90,13 +90,14 @@ Vector rotate(Vector, float);
 
 //================== S P A C E S H I P ==================//
 
+#define nSHIP_VERTICES_THRUST 8
 #define nSHIP_VERTICES 4
 #define SHIP_COLOR CYAN
 #define SHIP_SCALE 1
 #define SHIP_LENGTH 10
 #define SHIP_WIDTH 8
 
-#define SHIP_ROTATION_SPEED M_PI/8 // fine tune later
+#define SHIP_ROTATION_SPEED M_PI/12 // fine tune later
 #define SHIP_FRICTION 0.55
 #define SHIP_ACCELERATION 17
 #define SHIP_MAX_SPEED 170  // based on real game speed
@@ -109,9 +110,11 @@ typedef struct Ship {
     // The angle the ship is pointing in radians
     float angle;
     // The vertices of the ship
-    Vector vertices[nSHIP_VERTICES];
+    Vector vertices[nSHIP_VERTICES_THRUST];
 
-    Vector old_vertices[nSHIP_VERTICES];
+    Vector old_vertices[nSHIP_VERTICES_THRUST];
+
+    bool thrusting;
 } Ship;
 
 
@@ -320,12 +323,24 @@ const Vector NORTH = {0, -1};
 
 //================== M O D E L S ==================//
 
-const Vector playerModel[] = 
+/* const Vector playerModel[] = 
 {
     {0, -6},
     {4, 4},
     {0, 2},
     {-4, 4}
+}; */
+
+const Vector playerModel[] = 
+{
+    {0, 0},
+    {4, 0},
+    {0, -10},
+    {-4, 0},
+    {0, 0},
+    {-2, 2},
+    {0, 6},
+    {2, 2},
 };
 
 Vector asteroidModel[nASTEROID_VERTICES];
@@ -504,8 +519,10 @@ void update_ship(Ship *ship) {
 }
 
 void draw_ship(Ship *ship, short int color) {
-    transform_model(ship->vertices, playerModel, nSHIP_VERTICES, ship->position, ship->angle, 1);
+    transform_model(ship->vertices, playerModel, nSHIP_VERTICES_THRUST, ship->position, ship->angle, 1);
     draw_model(ship->vertices, nSHIP_VERTICES, color);
+    if (ship->thrusting)
+        draw_model(ship->vertices + 4, nSHIP_VERTICES, ORANGE);
 }
 
 //================== A S T E R O I D ==================//
@@ -609,7 +626,9 @@ void draw_bullets(Bullet* bullets) {
  */
 void draw_lives(Game* game) {
     int i = 0;
-    Ship ship;
+    Ship ship = {
+        .thrusting = false,
+    };
     for (; i < game->lives; i++) {
         Vector temp;
         temp.x = 6 + SHIP_WIDTH * i;
@@ -663,9 +682,10 @@ void reset_ship(Game* game) {
     game->player.position = vec_mul(game->size, 0.5);
     game->player.velocity = new_vector();
     game->player.angle = 0;
-    transform_model(game->player.vertices, playerModel, nSHIP_VERTICES, 
+    transform_model(game->player.vertices, playerModel, nSHIP_VERTICES_THRUST, 
                     game->player.position, game->player.angle, 1.5
                     );
+    game->player.thrusting = false;
 }
 
 void update_game(Game* game) {
@@ -702,6 +722,8 @@ int get_key_pressed() {
 }
 
 void handle_key_press(Game* game, int key_pressed) {
+    game->player.thrusting = false;
+
     if (key_pressed == KEY_RIGHT)
     {
         rotate_ship_right(&game->player);
@@ -713,6 +735,7 @@ void handle_key_press(Game* game, int key_pressed) {
     else if (key_pressed == KEY_UP)
     {
         accelerate_ship(&game->player);
+        game->player.thrusting = true;
     }
     else if (key_pressed == KEY_SPACE)
     {
@@ -1020,7 +1043,7 @@ void copy_olds(Game* game) {
     }
 
     int i = 0;
-    for (; i < nSHIP_VERTICES; i++) {
+    for (; i < nSHIP_VERTICES_THRUST; i++) {
         game->player.old_vertices[i] = game->player.vertices[i];
     }
 
@@ -1033,7 +1056,7 @@ void copy_olds(Game* game) {
 }
 
 void clear_player(Ship* ship) {
-    draw_model(ship->old_vertices, nSHIP_VERTICES, BLACK);
+    draw_model(ship->old_vertices, nSHIP_VERTICES_THRUST, BLACK);
 }
 
 void clear_asteroid(Asteroid* a) {
@@ -1055,7 +1078,9 @@ void clear_asteroids(Asteroid *a) {
 
 void clear_lives(Game *g) {
     int i = 0;
-    Ship ship;
+    Ship ship = {
+        .thrusting = false,
+    };
     for (; i < g->lives + 1; i++) {
         Vector temp;
         temp.x = 6 + 8 * i;
