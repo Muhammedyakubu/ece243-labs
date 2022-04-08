@@ -136,7 +136,7 @@ void draw_ship(Ship *, short int);
 #define MAX_ASTEROID_RADIUS 18
 #define MIN_ASTEROID_RADIUS 6
 
-#define ASTEROID_MIN_SPEED 20
+#define ASTEROID_MIN_SPEED 15
 #define ASTEROID_MAX_SPEED 45
 
 #define nASTEROID_VERTICES 12
@@ -210,6 +210,8 @@ void draw_bullets(Bullet*);
 #define COLLISION_SHIP 2
 const Vector CENTER = {RESOLUTION_X/2, RESOLUTION_Y/2};
 const Vector SCREEN_SIZE = {RESOLUTION_X, RESOLUTION_Y};
+
+#define nLIVES 5
 
 typedef struct Game {
     Vector size;
@@ -322,14 +324,6 @@ const Vector NORTH = {0, -1};
 
 
 //================== M O D E L S ==================//
-
-/* const Vector playerModel[] = 
-{
-    {0, -6},
-    {4, 4},
-    {0, 2},
-    {-4, 4}
-}; */
 
 const Vector playerModel[] = 
 {
@@ -511,9 +505,8 @@ void update_ship(Ship *ship) {
         vec_add(ship->position, vec_mul(ship->velocity, dt))
     );
     // add some friction to the ship
-    // ship->velocity = vec_mul(ship->velocity, (pow(1 - SHIP_FRICTION, dt)));   
-    Vector incr = vec_mul(ship->velocity, dt * SHIP_FRICTION);
-    ship->velocity = vec_sub(ship->velocity, incr);    
+    if (!ship->thrusting) 
+        ship->velocity = vec_mul(ship->velocity, (pow(1 - SHIP_FRICTION, dt)));      
     // printf("ship velocity: %f %f\n", ship->velocity.x, ship->velocity.y );
 
 }
@@ -629,12 +622,16 @@ void draw_lives(Game* game) {
     Ship ship = {
         .thrusting = false,
     };
-    for (; i < game->lives; i++) {
-        Vector temp;
-        temp.x = 6 + SHIP_WIDTH * i;
-        temp.y = 7;
+    for (; i < nLIVES; i++) {
+        Vector temp = {
+            .x = 6 + SHIP_WIDTH * i,
+            .y = 7,
+        };
         ship.position = vec_sub(game->size, temp);
-        draw_ship(&ship, MAGENTA);
+        draw_ship(
+            &ship, 
+            (i < game->lives) ? MAGENTA : GREY
+        );
     }
 }
 
@@ -1077,7 +1074,7 @@ void clear_asteroids(Asteroid *a) {
 }
 
 void clear_lives(Game *g) {
-    int i = 0;
+    /* int i = 0;
     Ship ship = {
         .thrusting = false,
     };
@@ -1087,7 +1084,7 @@ void clear_lives(Game *g) {
         temp.y = 7;
         ship.position = vec_sub(g->size, temp);
         draw_ship(&ship, BLACK);
-    }
+    } */
 }
 
 
