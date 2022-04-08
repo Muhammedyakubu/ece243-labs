@@ -48,8 +48,7 @@
 
 #define PS2_BASE              0xFF200100
 
-
-
+double cooldown = 0.2;
 /******************************************************************************
  *                              I N C L U D E S                               *
  *****************************************************************************/
@@ -232,8 +231,6 @@ typedef struct Game {
 
     int state;
 
-    int gamecode;
-
     // Vector* pModel, aModel;
 } Game;
 
@@ -390,6 +387,7 @@ int main(void)
             key_pressed = get_key_pressed();
         }
         clear_main_screen(&game);
+        clear_screen();
         pixel_buffer_start = *(pixel_ctrl_ptr + 1); // new back buffer
         //clear_screen();
         init_game(&game);
@@ -406,7 +404,7 @@ int main(void)
 
             // draw all objects
             update_game(&game);
-            //game.gamecode = 0;
+
             draw_game(&game);
             // swap_buffers();
 
@@ -430,6 +428,7 @@ int main(void)
         }
         clear_screen();
         game_over(&game);
+        draw_score(&game);
         wait_for_vsync(); // swap front and back buffers on VGA vertical sync
         while (key_pressed != KEY_TAB) {
             key_pressed = get_key_pressed();
@@ -745,9 +744,9 @@ void clear_main_screen(Game* game) {
     int w = game->size.x;
     int h = game->size.y;
     int a = (w / 2 - 78);
-    int b = (w / 2 - 14 - 69);
+    int b = (h / 2 - 14);
     int c = (w / 2 + 78);
-    int d = (w / 2 + 14 - 69);
+    int d = (h / 2 + 14);
     Vector e = {a, b};
     Vector f = {a, d};
     Vector g = {c, b};
@@ -758,7 +757,7 @@ void clear_main_screen(Game* game) {
     vec_draw_line(j, f, BLACK);
     for (; i < 11; i++) {
         int x = (w / 2 - 78) + 13*i;
-        int y = (w / 2 - 14) + 6 - 69;
+        int y = (h / 2 - 14) + 6;
         if (i==2) {
             Vector a = {x, y};
             Vector b = {x - 4, y + 17};
@@ -1063,6 +1062,119 @@ void clear_game_over(Game* game) {
     }
 }
 
+void draw_number(int position, int number) {
+    int x = 10 + 13*position;
+    int y = 10;
+    Vector a = {x - 4, y};
+    Vector b = {x + 4, y};
+    Vector c = {x - 4, y + 17};
+    Vector d = {x + 4, y + 17};
+    Vector e = {x - 4, y + 9};
+    Vector f = {x + 4, y + 9};
+    Vector g = {x, y};
+    Vector h = {x, y + 17};
+    if (number==0) { //0
+        vec_draw_line(a, b, WHITE);
+        vec_draw_line(a, c, WHITE);
+        vec_draw_line(b, d, WHITE);
+        vec_draw_line(c, d, WHITE);
+    }
+    if (number==1) { //1
+        vec_draw_line(g, h, WHITE);
+    }
+    if (number==2) { //2
+        vec_draw_line(a, b, WHITE);
+        vec_draw_line(b, f, WHITE);
+        vec_draw_line(e, f, WHITE);
+        vec_draw_line(c, e, WHITE);
+        vec_draw_line(c, d, WHITE);
+    }
+    if (number==3) { //3
+        vec_draw_line(a, b, WHITE);
+        vec_draw_line(b, d, WHITE);
+        vec_draw_line(c, d, WHITE);
+        vec_draw_line(e, f, WHITE);
+    }
+    if (number==4) { //4
+        vec_draw_line(a, e, WHITE);
+        vec_draw_line(e, f, WHITE);
+        vec_draw_line(b, d, WHITE);
+    }
+    if (number==5) { //5
+        vec_draw_line(a, b, WHITE);
+        vec_draw_line(a, e, WHITE);
+        vec_draw_line(e, f, WHITE);
+        vec_draw_line(d, f, WHITE);
+        vec_draw_line(c, d, WHITE);
+    }
+    if (number==6) { //6
+        vec_draw_line(a, b, WHITE);
+        vec_draw_line(a, c, WHITE);
+        vec_draw_line(e, f, WHITE);
+        vec_draw_line(d, f, WHITE);
+        vec_draw_line(c, d, WHITE);
+    }
+    if (number==7) { //7
+        vec_draw_line(a, b, WHITE);
+        vec_draw_line(b, d, WHITE);
+    }
+    if (number==8) { //8
+        vec_draw_line(a, b, WHITE);
+        vec_draw_line(a, c, WHITE);
+        vec_draw_line(e, f, WHITE);
+        vec_draw_line(d, b, WHITE);
+        vec_draw_line(c, d, WHITE);
+    }
+    if (number==9) { //9
+        vec_draw_line(a, b, WHITE);
+        vec_draw_line(b, d, WHITE);
+        vec_draw_line(a, e, WHITE);
+        vec_draw_line(e, f, WHITE);
+    }
+}
+
+void clear_score(int position) {
+    int x = 10 + 13*position;
+    int y = 10;
+    Vector a = {x - 4, y};
+    Vector b = {x + 4, y};
+    Vector c = {x - 4, y + 17};
+    Vector d = {x + 4, y + 17};
+    Vector e = {x - 4, y + 9};
+    Vector f = {x + 4, y + 9};
+    Vector g = {x, y};
+    Vector h = {x, y + 17};
+    vec_draw_line(a, b, BLACK);
+    vec_draw_line(a, c, BLACK);
+    vec_draw_line(e, f, BLACK);
+    vec_draw_line(d, b, BLACK);
+    vec_draw_line(c, d, BLACK);
+    vec_draw_line(g, h, BLACK);
+}
+
+void draw_score(Game* game) {
+    int a = game->score;
+    int first = (int) a / 100000;
+    clear_score(0);
+    draw_number(0, first);
+    int second = (int) (a - first*100000) / 10000;
+    clear_score(1);
+    draw_number(1, second);
+    int third = (int) (a - first*100000 - second*10000) / 1000;
+    clear_score(2);
+    draw_number(2, third);
+    int fourth = (int) (a - first*100000 - second*10000 - third*1000) / 100;
+    clear_score(3);
+    draw_number(3, fourth);
+    int fifth = (int) (a - first*100000 - second*10000 - third*1000 - fourth*100) / 10;
+    clear_score(4);
+    draw_number(4, fifth);
+    int sixth = (int) (a - first*100000 - second*10000 - third*1000 - fourth*100 - fifth*10);
+    clear_score(5);
+    draw_number(5, sixth);
+}
+
+
 void draw_lives(Game* game) {
     int i = 0;
     Ship ship = {
@@ -1083,10 +1195,6 @@ void draw_lives(Game* game) {
     }
 }
 
-void draw_score(Game* game) {
-
-}
-
 void draw_high_score(Game* game) {
 
 }
@@ -1096,7 +1204,6 @@ void init_game(Game* game) {
     game->size = SCREEN_SIZE;
     game->asteroidHead = NULL; 
     game->bulletHead = NULL;
-    game->gamecode = 0;
     reset_game(game);
 
     // set the asteroid model
@@ -1135,6 +1242,7 @@ void update_game(Game* game) {
     update_asteroids(game);
     update_bullets(game);
     update_ship(&game->player);
+    draw_score(game);
 }
 
 void draw_game(Game *game) {
@@ -1144,8 +1252,7 @@ void draw_game(Game *game) {
         draw_bullets(game->bulletHead);
         draw_ship(&game->player, SHIP_COLOR);
         draw_lives(game);
-        /* to be implemented */
-        // draw_score(game->score);
+        draw_score(game);
 }
 
 int get_key_pressed() {
@@ -1167,6 +1274,7 @@ int get_key_pressed() {
 }
 
 void handle_key_press(Game* game, int key_pressed) {
+
     game->player.thrusting = false;
 
     if (key_pressed == KEY_RIGHT)
@@ -1182,18 +1290,22 @@ void handle_key_press(Game* game, int key_pressed) {
         accelerate_ship(&game->player);
         game->player.thrusting = true;
     }
-    else if (key_pressed == KEY_SPACE)
+    else if (key_pressed == KEY_SPACE && cooldown <= 0)
     {
         // shoot bullet from the tip of the ship
-        Bullet *b = new_bullet(game->player.vertices[0], game->player.angle);
+        Bullet *b = new_bullet(game->player.vertices[2], game->player.angle);
         b->velocity = vec_add(game->player.velocity, b->velocity);
         insert_bullet(
-            game, 
-            b
+                game,
+                b
         );
+        
         Vector recoil = vec_mul(b->velocity, -0.01);
         game->player.position = vec_add(game->player.position, recoil);
+
+        cooldown = 0.2; 
     }
+    cooldown -= dt;
 }
 
 void insert_asteroid(Game* game, Asteroid* a){
@@ -1382,7 +1494,7 @@ void update_bullets(Game* game) {
 
     Bullet *b = game->bulletHead;
     for (; b != NULL; b = b->next) {
-        b->position = vec_add(b->position, vec_mul(b->velocity, dt));
+        b->position = vec_add(b->position, vec_mul(b->velocity, 0.5*dt));
         if (!point_on_screen(b->position)) {
             #ifdef CLEAR_FAST
             b->alive = false;
