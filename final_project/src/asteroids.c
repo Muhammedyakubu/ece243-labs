@@ -96,10 +96,10 @@ Vector rotate(Vector, float);
 #define SHIP_LENGTH 10
 #define SHIP_WIDTH 8
 
-#define SHIP_ROTATION_SPEED M_PI/16 // fine tune later
+#define SHIP_ROTATION_SPEED M_PI/8 // fine tune later
 #define SHIP_FRICTION 0.55
-#define SHIP_ACCELERATION 30
-#define SHIP_MAX_SPEED 250  // based on real game speed
+#define SHIP_ACCELERATION 17
+#define SHIP_MAX_SPEED 170  // based on real game speed
 
 typedef struct Ship {
     // The position of the ship
@@ -130,17 +130,16 @@ void draw_ship(Ship *, short int);
 //================== A S T E R O I D ==================//
 
 // starting radius of asteroid in pixels
-#define MAX_ASTEROID_RADIUS 24
+#define MAX_ASTEROID_RADIUS 18
 #define MIN_ASTEROID_RADIUS 6
 
-#define ASTEROID_MIN_SPEED 40
-#define ASTEROID_MAX_SPEED 65
-#define ASTEROID_SPEED_INCR 12.5
+#define ASTEROID_MIN_SPEED 20
+#define ASTEROID_MAX_SPEED 45
 
 #define nASTEROID_VERTICES 12
 #define nASTEROIDS 4
 
-#define ASTEROID_COLOR WHITE
+#define ASTEROID_COLOR YELLOW
 
 struct Asteroid {
     // The position of the asteroid
@@ -397,7 +396,7 @@ int main(void)
 
             // time taken for draw
             now = clock();
-            float dt = (float)(now - last_drawn) / CLOCKS_PER_SEC;
+            dt = (float)(now - last_drawn) / CLOCKS_PER_SEC;
             // printf("seconds per frame: %f, fps: %f\n", dt, 1.0/dt);
             last_drawn = now;
         }
@@ -741,7 +740,7 @@ void add_random_asteroids(Game* game, int num_asteroids) {
         // results in a speed proportional to the asteroids' size
         Vector speed = vec_mul(NORTH, 
                                 ASTEROID_MIN_SPEED + 
-                                size / MIN_ASTEROID_RADIUS * 
+                                size / MAX_ASTEROID_RADIUS * 
                                 (ASTEROID_MAX_SPEED - ASTEROID_MIN_SPEED));    
         Asteroid *a = new_asteroid(
             rand_vec(game),
@@ -847,7 +846,7 @@ void split_asteroid(Game* game, Asteroid* a) {
         // results in a speed proportional to the asteroids' size
         Vector speed = vec_mul(NORTH, 
                                 ASTEROID_MIN_SPEED + 
-                                size / MIN_ASTEROID_RADIUS * 
+                                size / MAX_ASTEROID_RADIUS * 
                                 (ASTEROID_MAX_SPEED - ASTEROID_MIN_SPEED));
                                 
         Asteroid *a_new = new_asteroid(
@@ -1057,7 +1056,7 @@ void clear_asteroids(Asteroid *a) {
 void clear_lives(Game *g) {
     int i = 0;
     Ship ship;
-    for (i; i < g->lives + 1; i++) {
+    for (; i < g->lives + 1; i++) {
         Vector temp;
         temp.x = 6 + 8 * i;
         temp.y = 7;
