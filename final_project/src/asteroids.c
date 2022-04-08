@@ -93,7 +93,7 @@ Vector rotate(Vector, float);
 #define nSHIP_VERTICES 4
 #define SHIP_COLOR CYAN
 
-#define SHIP_ROTATION_SPEED M_PI/24 // fine tune later
+#define SHIP_ROTATION_SPEED M_PI/16 // fine tune later
 #define SHIP_FRICTION 0.18
 #define SHIP_ACCELERATION 30
 #define SHIP_MAX_SPEED 10   // fine tune later
@@ -201,8 +201,8 @@ void draw_bullets(Bullet*);
 #define dt 1.0/10
 #define COLLISION_BULLET 1
 #define COLLISION_SHIP 2
-Vector CENTER = {RESOLUTION_X/2, RESOLUTION_Y/2};
-Vector SCREEN_SIZE = {RESOLUTION_X, RESOLUTION_Y};
+const Vector CENTER = {RESOLUTION_X/2, RESOLUTION_Y/2};
+const Vector SCREEN_SIZE = {RESOLUTION_X, RESOLUTION_Y};
 
 typedef struct Game {
     Vector size;
@@ -502,8 +502,8 @@ bool point_in_asteroid(Asteroid *asteroid, int num_vertices, Vector p)
         return true;
 
     // check if warped x point is in polygon
-    /* p.x += SCREEN_SIZE.x;
-    if (asteroid->radius_squared >= magnitude_squared(vec_sub(p, asteroid->position)))
+    p.x += SCREEN_SIZE.x; 
+     if (asteroid->radius_squared >= magnitude_squared(vec_sub(p, asteroid->position)))
         return true;
 
     // check if warped y point is in polygon
@@ -511,11 +511,12 @@ bool point_in_asteroid(Asteroid *asteroid, int num_vertices, Vector p)
     p.x -= SCREEN_SIZE.x;
     if (asteroid->radius_squared >= magnitude_squared(vec_sub(p, asteroid->position)))
         return true;
-
+        
     // check if warped x & y point is in polygon
-    vec_add(p, SCREEN_SIZE);
+    p.x += SCREEN_SIZE.x;
+    // p = vec_add(p, SCREEN_SIZE);
     if (asteroid->radius_squared >= magnitude_squared(vec_sub(p, asteroid->position))) 
-        return true; */
+        return true;
 
     return false;
 
