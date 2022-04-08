@@ -1445,7 +1445,7 @@ void update_pressed_keys() {
     bool updated = false;
 
     // save the last three bytes
-    for (int i = 0; i < 3 && !updated; i++) {
+    /* for (int i = 0; i < 3 && !updated; i++) {
         PS2_data = *(PS2_ptr); // read the Data register in the PS/2 port
         RVALID = PS2_data & 0x8000; // extract the RVALID field
 
@@ -1473,6 +1473,32 @@ void update_pressed_keys() {
         }
 
     }
+ */
+    // try reading all input 
+    do {
+        PS2_data = *(PS2_ptr); // read the Data register in the PS/2 port
+        RVALID = PS2_data & 0x8000; // extract the RVALID field
+
+        byte1 = byte2;      
+        byte2 = byte3;
+        byte3 = PS2_data & 0xFF;
+
+        for (int i = 0; i < nKEYS; i++) {
+            if (byte3 == keys[i].code) {
+                // updated = true;
+                if (byte2 == 0xF0) {
+                    keys[i].is_down = false;
+                    printf("released %x\n", keys[i].code);
+                }
+                else {
+                    keys[i].is_down = true;
+                    printf("pressed %x\n", keys[i].code);
+                }
+                // break;
+            }
+        }
+
+    }   while (RVALID);
 }
 
 void shoot_bullet(Game* game) {
