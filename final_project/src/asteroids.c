@@ -354,37 +354,39 @@ int main(void)
     int key_pressed = KEY_NONE;
 
     init_game(&game);
+    while (1) {
+        //while (game->lives > 0)
+        while (1)
+        {
+            // indicate that game is running
+            *led_ptr = *sw_ptr;
 
-    while (1)
-    {   
-        // indicate that game is running
-        *led_ptr = *sw_ptr;
+            #ifdef CLEAR_FAST
+            clear_screen_fast(&game);
+            #else
+            clear_screen();
+            #endif
 
-        #ifdef CLEAR_FAST
-        clear_screen_fast(&game);
-        #else
-        clear_screen();
-        #endif
+            // draw all objects
+            update_game(&game);
 
-        // draw all objects
-        update_game(&game);
+            draw_game(&game);
+            // swap_buffers();
 
-        draw_game(&game);
-        // swap_buffers();
+            // update all objects
 
-        // update all objects
+            // read ps2 first byte
+            key_pressed = get_key_pressed();
+            // printf("%d\n", key_pressed);
 
-        // read ps2 first byte
-        key_pressed = get_key_pressed();
-        // printf("%d\n", key_pressed);  
-
-        handle_key_press(&game, key_pressed);
+            handle_key_press(&game, key_pressed);
 
 
-        wait_for_vsync(); // swap front and back buffers on VGA vertical sync
-        pixel_buffer_start = *(pixel_ctrl_ptr + 1); // new back buffer
+            wait_for_vsync(); // swap front and back buffers on VGA vertical sync
+            pixel_buffer_start = *(pixel_ctrl_ptr + 1); // new back buffer
+        }
+        //draw_game_over(&game);
     }
-    
     return 0;
 }
 
@@ -567,11 +569,13 @@ void draw_bullets(Bullet* bullets) {
 
 
 //================== G A M E ==================//
-//
-//void main_screen(Game* game) {
-//    plot_line
-//    vec_draw_line(Vector a, Vector b, short int color);
-//}
+
+void main_screen(Game* game) {
+    Vector temp = {}
+    Vector a = {(game->size.x) / 3, (game->size.y / 4)}
+            vec_sub(game->size, )
+    vec_draw_line(Vector a, Vector b, short int color);
+}
 
 void draw_lives(Game* game) {
     int i = 0;
