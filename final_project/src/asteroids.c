@@ -97,7 +97,7 @@ Vector rotate(Vector, float);
 #define SHIP_WIDTH 8
 
 #define SHIP_ROTATION_SPEED M_PI/16 // fine tune later
-#define SHIP_FRICTION 0.6
+#define SHIP_FRICTION 0.55
 #define SHIP_ACCELERATION 30
 #define SHIP_MAX_SPEED 250  // based on real game speed
 
@@ -762,9 +762,6 @@ void count_asteroids (Game* game) {
 }
 
 void delete_asteroid(Game* game, Asteroid* a) {
-    // clear it from the screen
-    // clear_asteroid(a);
-
     // remove it from the linked list
     if (game->asteroidHead == a)
         game->asteroidHead = a->next;
@@ -773,7 +770,6 @@ void delete_asteroid(Game* game, Asteroid* a) {
     if (a->next)
         a->next->prev = a->prev;
 
-    // for some reason, freeing the asteroid causes a segfault
     free(a);
 }
 
