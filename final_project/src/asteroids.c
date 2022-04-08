@@ -644,6 +644,8 @@ void draw_bullets(Bullet* bullets) {
 
 //================== G A M E ==================//
 
+void press_tab(Game* game);
+
 void main_screen(Game* game) {
     int i = 2;
     int w = SCREEN_SIZE.x;
@@ -669,26 +671,26 @@ void main_screen(Game* game) {
                 Vector c = {x + 4, y + 17};
                 Vector d = {x - 2, y + 9};
                 Vector e = {x + 2, y + 9};
-                vec_draw_line(a, b, WHITE);
-                vec_draw_line(a, c, WHITE);
-                vec_draw_line(d, e, WHITE);
+                vec_draw_line(a, b, MAGENTA);
+                vec_draw_line(a, c, MAGENTA);
+                vec_draw_line(d, e, MAGENTA);
             }
             if (i==3) {
                 Vector a = {x + 4, y - 1};
                 Vector b = {x - 4, y + 4 - 1};
                 Vector c = {x + 4, y + 13 - 1};
                 Vector d = {x - 4, y + 17 - 1};
-                vec_draw_line(a, b, WHITE);
-                vec_draw_line(b, c, WHITE);
-                vec_draw_line(c, d, WHITE);
+                vec_draw_line(a, b, CYAN);
+                vec_draw_line(b, c, CYAN);
+                vec_draw_line(c, d, CYAN);
             }
             if (i==4) {
                 Vector a = {x - 4, y};
                 Vector b = {x + 4, y};
                 Vector c = {x, y};
                 Vector d = {x, y + 17};
-                vec_draw_line(a, b, WHITE);
-                vec_draw_line(c, d, WHITE);
+                vec_draw_line(a, b, CYAN);
+                vec_draw_line(c, d, CYAN);
             }
             if (i==5) {
                 Vector a = {x - 4, y};
@@ -697,10 +699,10 @@ void main_screen(Game* game) {
                 Vector d = {x + 4, y + 17};
                 Vector e = {x - 4, y + 9};
                 Vector f = {x + 4, y + 9};
-                vec_draw_line(a, b, WHITE);
-                vec_draw_line(a, c, WHITE);
-                vec_draw_line(c, d, WHITE);
-                vec_draw_line(e, f, WHITE);
+                vec_draw_line(a, b, CYAN);
+                vec_draw_line(a, c, CYAN);
+                vec_draw_line(c, d, CYAN);
+                vec_draw_line(e, f, CYAN);
             }
             if (i==6) {
                 Vector a = {x - 4, y};
@@ -708,44 +710,45 @@ void main_screen(Game* game) {
                 Vector c = {x + 4, y + 4};
                 Vector d = {x - 4, y + 9};
                 Vector e = {x + 4, y + 17};
-                vec_draw_line(a, b, WHITE);
-                vec_draw_line(a, c, WHITE);
-                vec_draw_line(c, d, WHITE);
-                vec_draw_line(d, e, WHITE);
+                vec_draw_line(a, b, CYAN);
+                vec_draw_line(a, c, CYAN);
+                vec_draw_line(c, d, CYAN);
+                vec_draw_line(d, e, CYAN);
             }
             if (i==7) {
                 Vector a = {x - 4, y};
                 Vector b = {x + 4, y};
                 Vector c = {x - 4, y + 17};
                 Vector d = {x + 4, y + 17};
-                vec_draw_line(a, b, WHITE);
-                vec_draw_line(a, c, WHITE);
-                vec_draw_line(c, d, WHITE);
-                vec_draw_line(b, d, WHITE);
+                vec_draw_line(a, b, CYAN);
+                vec_draw_line(a, c, CYAN);
+                vec_draw_line(c, d, CYAN);
+                vec_draw_line(b, d, CYAN);
             }
             if (i==8) {
                 Vector a = {x, y};
                 Vector b = {x, y + 17};
-                vec_draw_line(a, b, WHITE);
+                vec_draw_line(a, b, CYAN);
             }
             if (i==9) {
                 Vector a = {x - 4, y};
                 Vector b = {x - 4, y + 17};
                 Vector c = {x + 4, y + 9};
-                vec_draw_line(a, b, WHITE);
-                vec_draw_line(a, c, WHITE);
-                vec_draw_line(c, b, WHITE);
+                vec_draw_line(a, b, CYAN);
+                vec_draw_line(a, c, CYAN);
+                vec_draw_line(c, b, CYAN);
             }
             if (i==10) {
                 Vector a = {x + 4, y - 1};
                 Vector b = {x - 4, y + 4 - 1};
                 Vector c = {x + 4, y + 13 - 1};
                 Vector d = {x - 4, y + 17 - 1};
-                vec_draw_line(a, b, WHITE);
-                vec_draw_line(b, c, WHITE);
-                vec_draw_line(c, d, WHITE);
+                vec_draw_line(a, b, CYAN);
+                vec_draw_line(b, c, CYAN);
+                vec_draw_line(c, d, CYAN);
             }
     }
+    press_tab(game);
 }
 void clear_main_screen(Game* game) {
     int i = 2;
@@ -959,6 +962,7 @@ void game_over(Game* game) {
             vec_draw_line(d, e, WHITE);
         }
     }
+    press_tab(game);
 }
 void clear_game_over(Game* game) {
     int i = 2;
@@ -1170,6 +1174,107 @@ void draw_score(Game* game) {
     }
 }
 
+void press_tab(Game* game) {
+    int i = 2;
+    int w = SCREEN_SIZE.x;
+    int h = SCREEN_SIZE.y;
+    for (i; i < 11; i++) {
+        int x = (w / 2 - 36) + 2 + 7*(i-1);
+        int y = (w / 2 - 10) + 3 + 300;
+        if (i==2) { //P
+            Vector a = {x - 2, y};
+            Vector b = {x + 2, y};
+            Vector c = {x - 2, y + 9};
+            Vector d = {x + 2, y + 9};
+            Vector e = {x - 2, y + 4};
+            Vector f = {x + 2, y + 4};
+            vec_draw_line(a, b, WHITE);
+            vec_draw_line(a, c, WHITE);
+            vec_draw_line(b, f, WHITE);
+            vec_draw_line(e, f, WHITE);
+        }
+        if (i==3) {//R
+            Vector a = {x - 2, y};
+            Vector b = {x - 2, y + 9};
+            Vector c = {x + 2, y + 2};
+            Vector d = {x - 2, y + 4};
+            Vector e = {x + 2, y + 9};
+            vec_draw_line(a, b, WHITE);
+            vec_draw_line(a, c, WHITE);
+            vec_draw_line(c, d, WHITE);
+            vec_draw_line(d, e, WHITE);
+        }
+        if (i==4) { //E
+            Vector a = {x - 2, y};
+            Vector b = {x + 2, y};
+            Vector c = {x - 2, y + 9};
+            Vector d = {x + 2, y + 9};
+            Vector e = {x - 2, y + 4};
+            Vector f = {x + 2, y + 4};
+            vec_draw_line(a, b, WHITE);
+            vec_draw_line(a, c, WHITE);
+            vec_draw_line(c, d, WHITE);
+            vec_draw_line(e, f, WHITE);
+        }
+        if (i==5) { //S
+            Vector a = {x - 2, y};
+            Vector b = {x + 2, y};
+            Vector c = {x - 2, y + 9};
+            Vector d = {x + 2, y + 9};
+            Vector e = {x - 2, y + 4};
+            Vector f = {x + 2, y + 4};
+            vec_draw_line(a, b, WHITE);
+            vec_draw_line(a, e, WHITE);
+            vec_draw_line(e, f, WHITE);
+            vec_draw_line(d, f, WHITE);
+            vec_draw_line(c, d, WHITE);
+        }
+        if (i==6) { //S
+            Vector a = {x - 2, y};
+            Vector b = {x + 2, y};
+            Vector c = {x - 2, y + 9};
+            Vector d = {x + 2, y + 9};
+            Vector e = {x - 2, y + 4};
+            Vector f = {x + 2, y + 4};
+            vec_draw_line(a, b, WHITE);
+            vec_draw_line(a, e, WHITE);
+            vec_draw_line(e, f, WHITE);
+            vec_draw_line(d, f, WHITE);
+            vec_draw_line(c, d, WHITE);
+        }
+        if (i==8) {//T
+            Vector a = {x - 2, y};
+            Vector b = {x + 2, y};
+            Vector c = {x, y};
+            Vector d = {x, y + 9};
+            vec_draw_line(a, b, MAGENTA);
+            vec_draw_line(c, d, MAGENTA);
+        }
+        if (i==9) { //A
+            Vector a = {x, y};
+            Vector b = {x - 2, y + 9};
+            Vector c = {x + 2, y + 9};
+            Vector d = {x - 1, y + 4};
+            Vector e = {x + 1, y + 4};
+            vec_draw_line(a, b, MAGENTA);
+            vec_draw_line(a, c, MAGENTA);
+            vec_draw_line(d, e, MAGENTA);
+        }
+        if (i==10) { //B
+            Vector a = {x - 2, y};
+            Vector b = {x + 2, y};
+            Vector c = {x - 2, y + 9};
+            Vector d = {x + 2, y + 9};
+            Vector e = {x - 2, y + 4};
+            Vector f = {x + 2, y + 4};
+            vec_draw_line(a, b, MAGENTA);
+            vec_draw_line(a, c, MAGENTA);
+            vec_draw_line(e, f, MAGENTA);
+            vec_draw_line(d, b, MAGENTA);
+            vec_draw_line(c, d, MAGENTA);
+        }
+    }
+}
 
 void draw_lives(Game* game) {
     int i = 0;
