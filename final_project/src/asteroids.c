@@ -45,6 +45,7 @@
 #define KEY_DOWN 114 // Keyboard Down Arrow
 #define KEY_UP 117 // Keyboard Up Arrow
 #define KEY_SPACE 41 // Keyboard Spacebar
+#define KEY_ESC 0x76 // Keyboard Esc
 
 #define PS2_BASE              0xFF200100
 
@@ -231,7 +232,7 @@ typedef struct Game {
 
     int lives;
 
-    int state;
+    bool running;
 
     // Vector* pModel, aModel;
 } Game;
@@ -393,7 +394,7 @@ int main(void)
 
         init_game(&game);
 
-        while (game.lives > 0)
+        while (game.lives > 0 && game.running)
         {
             // indicate that game is running
             *led_ptr = *sw_ptr;
@@ -1200,6 +1201,7 @@ void init_game(Game* game) {
     game->size = SCREEN_SIZE;
     game->asteroidHead = NULL; 
     game->bulletHead = NULL;
+    game->running = true;
     reset_game(game);
 
     // set the asteroid model
@@ -1283,6 +1285,15 @@ void handle_key_press(Game* game, int key_pressed) {
     {
         accelerate_ship(&game->player);
         game->player.thrusting = true;
+    }
+    else if (key_pressed == KEY_DOWN)
+    {   
+        // hyper space
+        game->player.position = rand_vec(game);
+    }
+    else if (key_pressed == KEY_ESC)
+    {
+        game->running = false;
     }
     else if (key_pressed == KEY_SPACE && cooldown <= 0)
     {
@@ -1405,11 +1416,7 @@ bool check_collision(Game* game, Asteroid* a) {
         if (point_in_asteroid(a, nASTEROID_VERTICES, game->player.vertices[i])) {
             // update lives
             game->lives -= 1;
-            if (game->lives == 0) {
-                game->state = -1;
-            }
             // reset ship
-            // may need to change this logic in case the user dies at the center of the screen
             reset_ship(game);
             return true;
         }
