@@ -126,14 +126,14 @@ Key keys[] =
 #define nSHIP_VERTICES_THRUST 8
 #define nSHIP_VERTICES 4
 #define SHIP_COLOR CYAN
-#define SHIP_SCALE 1.2
+#define SHIP_SCALE 1.3
 #define SHIP_LENGTH 10
 #define SHIP_WIDTH 8 * SHIP_SCALE
 
 #define SHIP_ROTATION_P_SEC M_PI // 2 second to rotate 360 degrees
 #define SHIP_FRICTION 0.55
 #define SHIP_ACCELERATION 150
-#define SHIP_MAX_SPEED 120  // based on real game speed
+#define SHIP_MAX_SPEED 100  // based on real game speed
 
 typedef struct Ship {
     // The position of the ship
@@ -175,7 +175,7 @@ void draw_ship(Ship *, short int);
 #define nASTEROID_VERTICES 12
 #define nASTEROIDS 4
 
-#define ASTEROID_COLOR YELLOW
+#define ASTEROID_COLOR YELLOW   
 
 #define ASTEROID_MIN_SCORE 25
 
@@ -212,7 +212,7 @@ void draw_asteroids(Asteroid*);
 //================== B U L L E T ==================//
 
 #define BULLET_SPEED 200
-#define BULLET_SIZE 2
+#define BULLET_SIZE 3
 #define BULLET_COLOR CYAN
 #define BULLET_COOLDOWN 0.1
 
@@ -1477,7 +1477,7 @@ void shoot_bullet(Game* game) {
 
     // shoot bullet from the tip of the ship
     Bullet *b = new_bullet(game->player.vertices[2], game->player.angle);
-    b->velocity = vec_add(game->player.velocity, b->velocity);
+    // b->velocity = vec_add(game->player.velocity, b->velocity);
     insert_bullet(game, b);
 
     // player recoil from shooting bullet
