@@ -214,7 +214,7 @@ void draw_asteroids(Asteroid*);
 //================== B U L L E T ==================//
 
 #define BULLET_SPEED 200
-#define BULLET_SIZE 3
+#define BULLET_SIZE 2
 #define BULLET_COLOR CYAN
 #define BULLET_COOLDOWN 0.1
 
@@ -1455,34 +1455,22 @@ void delay(float seconds) {
     while ((clock() - start)/CLOCKS_PER_SEC < seconds);
 }
 
-#define DELAY 0.2
+#define DELAY 0.1
 
 void update_pressed_keys() {
     volatile int* PS2_ptr = (int*)PS2_BASE;
     int PS2_data, RVALID, RAVAIL;
     char byte1, byte2, byte3;
 
-    do {
-        // update loop parameters
-        PS2_data = *(PS2_ptr); 
-        RVALID = (PS2_data & 0x8000) >> 15; // extract the RVALID field
-        RAVAIL = (PS2_data & 0xFFFF0000) >> 16; // get the number of bytes available
+    PS2_data = *(PS2_ptr); 
+    RVALID = (PS2_data & 0x8000) >> 15; // extract the RVALID field
+    RAVAIL = (PS2_data & 0xFFFF0000) >> 16; // get the number of bytes available
 
-        if (!RVALID) break;
-        else;
-
+    for(; RAVAIL > -1 && RVALID; RAVAIL--) {
         // update input bytes
         byte1 = byte2;      
         byte2 = byte3;
         byte3 = PS2_data & 0xFF;
-
-        #ifdef PRINT_KEYS
-        printf("Inloop: PS2_data: %x, RAVAIL: %x, RVALID: %x\n", PS2_data, RAVAIL, RVALID);
-        delay(DELAY);
-        
-        printf("Inloop: byte1: %x, byte2: %x, byte3: %x\n", byte1, byte2, byte3);
-        delay(DELAY);
-        #endif
 
         for (int j = 0; j < nKEYS; j++) {
             if (byte3 == keys[j].code) {
@@ -1501,7 +1489,11 @@ void update_pressed_keys() {
                 }
             }
         }
-    } while (RAVAIL > 0 && RVALID);
+
+        // update loop parameters
+        PS2_data = *(PS2_ptr); 
+        RVALID = (PS2_data & 0x8000) >> 15; // extract the RVALID field
+    }
 }
 
 void shoot_bullet(Game* game) {
