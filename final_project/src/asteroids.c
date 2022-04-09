@@ -133,7 +133,7 @@ Key keys[] =
 #define SHIP_ROTATION_P_SEC M_PI // 2 second to rotate 360 degrees
 #define SHIP_FRICTION 0.55
 #define SHIP_ACCELERATION 150
-#define SHIP_MAX_SPEED 200  // based on real game speed
+#define SHIP_MAX_SPEED 170  // based on real game speed
 
 typedef struct Ship {
     // The position of the ship
@@ -603,7 +603,7 @@ void update_ship(Ship *ship) {
         accelerate_ship(ship);
 
     ship->velocity = vec_mul(ship->velocity, (pow(1 - SHIP_FRICTION, dt))); 
-    
+
     #ifdef PRINT_VELOCITY
     printf("ship velocity: %f %f\n", ship->velocity.x, ship->velocity.y );
     #endif
