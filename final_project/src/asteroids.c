@@ -130,10 +130,10 @@ Key keys[] =
 #define SHIP_LENGTH 10
 #define SHIP_WIDTH 8 * SHIP_SCALE
 
-#define SHIP_ROTATION_SPEED M_PI/20 // fine tune later
+#define SHIP_ROTATION_P_SEC M_PI // 2 second to rotate 360 degrees
 #define SHIP_FRICTION 0.55
 #define SHIP_ACCELERATION 150
-#define SHIP_MAX_SPEED 170  // based on real game speed
+#define SHIP_MAX_SPEED 120  // based on real game speed
 
 typedef struct Ship {
     // The position of the ship
@@ -561,11 +561,11 @@ Vector rotate(Vector v, float a) {
 //================== S P A C E S H I P ==================//
 
 void rotate_ship_left(Ship *ship) {
-    ship->angle -= SHIP_ROTATION_SPEED;
+    ship->angle -= SHIP_ROTATION_P_SEC * dt;
 }
 
 void rotate_ship_right(Ship *ship) {
-    ship->angle += SHIP_ROTATION_SPEED;
+    ship->angle += SHIP_ROTATION_P_SEC * dt;
 }
 
 void bound_speed(Ship *ship) {
