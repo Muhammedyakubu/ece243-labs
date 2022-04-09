@@ -32,6 +32,8 @@
 #define ORANGE 0xFC00
 
 #define ABS(x) (((x) > 0) ? (x) : -(x))
+#define MIN(a,b) (((a)<(b))?(a):(b))
+#define MAX(a,b) (((a)>(b))?(a):(b))
 
 /* Screen size. */
 #define RESOLUTION_X 320
@@ -362,7 +364,7 @@ Vector rand_vec(Game *game);
 #define CLEAR_FAST
 // #define PRINT_KEYS
 // #define PRINT_VELOCITY
-#define PRINT_FPS
+// #define PRINT_FPS
 
 
 
@@ -446,9 +448,6 @@ int main(void)
     while (*sw_ptr == 0);
     *led_ptr = *sw_ptr;
 
-    int key_pressed = KEY_NONE;
-
-    //init_game(&game);
     clock_t last_drawn, now;
     last_drawn = clock();
 
@@ -1451,52 +1450,58 @@ void draw_game(Game *game) {
     draw_score(game);
 }
 
-void delay(int seconds) {
-    while (seconds > 0) {
-        seconds -= dt;
-    }
+void delay(float seconds) {
+    clock_t start = clock();
+    while ((clock() - start)/CLOCKS_PER_SEC < seconds);
 }
+
+#define DELAY 0.2
 
 void update_pressed_keys() {
     volatile int* PS2_ptr = (int*)PS2_BASE;
-    int PS2_data, RVALID;
-    // char byte1 = 0, byte2 = 0, byte3 = 0;
-    bool updated = false;
+    int PS2_data, RVALID, RAVAIL;
+    char byte1, byte2, byte3;
 
-    // save the last three bytes
-    for (int i = 0; i < 3 && !updated; i++) {
-        PS2_data = *(PS2_ptr); // read the Data register in the PS/2 port
-        RVALID = PS2_data & 0x8000; // extract the RVALID field
+    do {
+        // update loop parameters
+        PS2_data = *(PS2_ptr); 
+        RVALID = (PS2_data & 0x8000) >> 15; // extract the RVALID field
+        RAVAIL = (PS2_data & 0xFFFF0000) >> 16; // get the number of bytes available
 
-        if (!RVALID || updated) 
-            continue;
+        if (!RVALID) break;
         else;
 
+        // update input bytes
         byte1 = byte2;      
         byte2 = byte3;
         byte3 = PS2_data & 0xFF;
 
-        for (int i = 0; i < nKEYS; i++) {
-            if (byte3 == keys[i].code) {
-                updated = true;
+        #ifdef PRINT_KEYS
+        printf("Inloop: PS2_data: %x, RAVAIL: %x, RVALID: %x\n", PS2_data, RAVAIL, RVALID);
+        delay(DELAY);
+        
+        printf("Inloop: byte1: %x, byte2: %x, byte3: %x\n", byte1, byte2, byte3);
+        delay(DELAY);
+        #endif
+
+        for (int j = 0; j < nKEYS; j++) {
+            if (byte3 == keys[j].code) {
 
                 if (byte2 == 0xF0) {
-                    keys[i].is_down = false;
+                    keys[j].is_down = false;
                     #ifdef PRINT_KEYS
-                    printf("released %x\n", keys[i].code);
+                    printf("released %x\n", keys[j].code);
                     #endif
                 }
                 else {
-                    keys[i].is_down = true;
+                    keys[j].is_down = true;
                     #ifdef PRINT_KEYS
-                    printf("pressed %x\n", keys[i].code);
+                    printf("pressed %x\n", keys[j].code);
                     #endif
                 }
-                break;
             }
         }
-
-    }
+    } while (RAVAIL > 0 && RVALID);
 }
 
 void shoot_bullet(Game* game) {
