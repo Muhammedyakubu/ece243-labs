@@ -123,12 +123,12 @@ Key keys[] =
 
 //================== S P A C E S H I P ==================//
 
-#define nSHIP_VERTICES_THRUST 8
+#define nSHIP_VERTICES_THRUST 12
 #define nSHIP_VERTICES 4
 #define SHIP_COLOR CYAN
 #define SHIP_SCALE 1.3
 #define SHIP_LENGTH 10
-#define SHIP_WIDTH 8 * SHIP_SCALE
+#define SHIP_WIDTH 6
 
 #define SHIP_ROTATION_P_SEC M_PI // 2 second to rotate 360 degrees
 #define SHIP_FRICTION 0.55
@@ -175,7 +175,7 @@ void draw_ship(Ship *, short int);
 #define nASTEROID_VERTICES 12
 #define nASTEROIDS 4
 
-#define ASTEROID_COLOR YELLOW   
+#define ASTEROID_COLOR ORANGE   
 
 #define ASTEROID_MIN_SCORE 25
 
@@ -361,8 +361,8 @@ Vector rand_vec(Game *game);
 
 #define CLEAR_FAST
 // #define PRINT_KEYS
-#define PRINT_VELOCITY
-// #define PRINT_FPS
+// #define PRINT_VELOCITY
+#define PRINT_FPS
 
 
 
@@ -388,12 +388,27 @@ char byte1 = 0, byte2 = 0, byte3 = 0;
 
 //================== M O D E L S ==================//
 
+/* const Vector playerModel[] = 
+{
+    {0, 0},
+    {3, 2},
+    {0, -8},
+    {-3, 2},
+    {0, 0},
+    {-1, 2},
+    {0, 8},
+    {1, 2},
+}; */
 const Vector playerModel[] = 
 {
     {0, 0},
-    {4, 2},
+    {3, 2},
     {0, -8},
-    {-4, 2},
+    {-3, 2},
+    {0, 0},
+    {-0.5, 2},
+    {0, 6},
+    {0.5, 2},
     {0, 0},
     {-1, 2},
     {0, 8},
@@ -446,7 +461,6 @@ int main(void)
 
         while (!keys[TAB].is_down) {
             update_pressed_keys();
-            // key_pressed = get_key_pressed();
         }
 
         clear_screen();
@@ -614,8 +628,10 @@ void draw_ship(Ship *ship, short int color) {
     transform_model(ship->vertices, playerModel, nSHIP_VERTICES_THRUST, ship->position, ship->angle, SHIP_SCALE);
     draw_model(ship->vertices, nSHIP_VERTICES, color);
 
-    if (ship->thrusting)
-        draw_model(ship->vertices + 4, nSHIP_VERTICES, ORANGE);
+    if (!ship->thrusting) return;
+
+    draw_model(ship->vertices + 4, nSHIP_VERTICES, RED);
+    draw_model(ship->vertices + 8, nSHIP_VERTICES, YELLOW);
 }
 
 //================== A S T E R O I D ==================//
@@ -1348,7 +1364,7 @@ void draw_lives(Game* game) {
     Ship ship = {.thrusting = false};
     for (; i < nLIVES; i++) {
         Vector temp = {
-            .x = 6 + SHIP_WIDTH * i,
+            .x = 6 + SHIP_WIDTH * SHIP_SCALE * i,
             .y = 7
         };
 
