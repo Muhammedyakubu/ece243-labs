@@ -133,7 +133,7 @@ Key keys[] =
 #define SHIP_ROTATION_P_SEC M_PI // 2 second to rotate 360 degrees
 #define SHIP_FRICTION 0.55
 #define SHIP_ACCELERATION 150
-#define SHIP_MAX_SPEED 100  // based on real game speed
+#define SHIP_MAX_SPEED 200  // based on real game speed
 
 typedef struct Ship {
     // The position of the ship
@@ -361,6 +361,8 @@ Vector rand_vec(Game *game);
 
 #define CLEAR_FAST
 // #define PRINT_KEYS
+#define PRINT_VELOCITY
+// #define PRINT_FPS
 
 
 
@@ -388,14 +390,14 @@ char byte1 = 0, byte2 = 0, byte3 = 0;
 
 const Vector playerModel[] = 
 {
-    {0, 2},
+    {0, 0},
     {4, 2},
     {0, -8},
     {-4, 2},
-    {0, 2},
-    {-2, 4},
-    {0, 10},
-    {2, 4},
+    {0, 0},
+    {-1, 2},
+    {0, 8},
+    {1, 2},
 };
 
 Vector asteroidModel[nASTEROID_VERTICES];
@@ -480,8 +482,10 @@ int main(void)
             // time taken for draw
             now = clock();
             dt = (float)(now - last_drawn) / CLOCKS_PER_SEC;
-            printf("seconds per frame: %f, fps: %f\n", dt, 1.0/dt);
             last_drawn = now;
+            #ifdef PRINT_FPS
+            printf("seconds per frame: %f, fps: %f\n", dt, 1.0/dt);
+            #endif
         }
 
         clear_screen();
@@ -597,10 +601,12 @@ void update_ship(Ship *ship) {
     // add some friction to the ship when it is not accelerating
     if (ship->thrusting) 
         accelerate_ship(ship);
-    else
-        ship->velocity = vec_mul(ship->velocity, (pow(1 - SHIP_FRICTION, dt))); 
 
-    // printf("ship velocity: %f %f\n", ship->velocity.x, ship->velocity.y );
+    ship->velocity = vec_mul(ship->velocity, (pow(1 - SHIP_FRICTION, dt))); 
+    
+    #ifdef PRINT_VELOCITY
+    printf("ship velocity: %f %f\n", ship->velocity.x, ship->velocity.y );
+    #endif
 
 }
 
@@ -624,6 +630,7 @@ Asteroid *new_asteroid(Vector position, Vector velocity, float radius) {
     a->prev = a->next = NULL;
     a->dead = false;
     transform_model(a->vertices, asteroidModel, nASTEROID_VERTICES, position, 0, radius);
+    transform_model(a->old_vertices, asteroidModel, nASTEROID_VERTICES, position, 0, radius);
 
     return a;
 }
@@ -674,7 +681,7 @@ void draw_asteroids(Asteroid* asteroids) {
 
 Bullet *new_bullet(Vector position, float angle){
     Bullet *b = (Bullet *)malloc(sizeof(Bullet));
-    b->position = position;
+    b->old_position = b->position = position;
     b->alive = true;
     b->velocity = vec_mul(rotate(NORTH, angle), BULLET_SPEED);
     b->prev = b->next = NULL;
@@ -1362,6 +1369,10 @@ void draw_high_score(Game* game) {
 void init_game(Game* game) {
     game->size = SCREEN_SIZE;
     reset_ship(game);
+    for (int i = 0; i < nSHIP_VERTICES_THRUST; i++) {
+        game->player.old_vertices[i] = game->player.vertices[i];
+    }
+   
     game->asteroidHead = NULL; 
     game->bulletHead = NULL;
     game->score = 0;
