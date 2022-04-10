@@ -366,7 +366,7 @@ Vector rand_vec(Game *game);
 #define CLEAR_FAST
 // #define PRINT_KEYS
 // #define PRINT_VELOCITY
-// #define PRINT_FPS
+#define PRINT_FPS
 
 
 
@@ -552,7 +552,7 @@ Vector vec_mul(Vector a, float sf) {
 }
 
 // We don't calculate the actual magnitude as sqrt is expensive
-float magnitude_squared(Vector v) {
+inline float magnitude_squared(Vector v) {
     return v.x * v.x + v.y * v.y;
 }
 
@@ -650,13 +650,13 @@ Asteroid *new_asteroid(Vector position, Vector velocity, float radius) {
     return a;
 }
 
-bool point_in_asteroid(Asteroid *asteroid, int num_vertices, Vector p)
+inline bool point_in_asteroid(Asteroid *asteroid, int num_vertices, Vector p)
 {   
     // model asteroid as a circle
-    if (asteroid->radius_squared >= magnitude_squared(vec_sub(p, asteroid->position))) 
+    /* if (asteroid->radius_squared >= magnitude_squared(vec_sub(p, asteroid->position))) 
         return true;
 
-    // check if un-warped x point is in polygon
+     // check if un-warped x point is in polygon
     p.x += SCREEN_SIZE.x; 
      if (asteroid->radius_squared >= magnitude_squared(vec_sub(p, asteroid->position)))
         return true;
@@ -669,9 +669,18 @@ bool point_in_asteroid(Asteroid *asteroid, int num_vertices, Vector p)
         
     // check if un-warped x, y point is in polygon
     p.x += SCREEN_SIZE.x;
-    // p = vec_add(p, SCREEN_SIZE);
     if (asteroid->radius_squared >= magnitude_squared(vec_sub(p, asteroid->position))) 
-        return true;
+        return true; */
+
+
+    // testing how much this affects the performance
+    for (int i = -1; i <= 1; ++i) {
+        for (int j = -1; j <= 1; ++j) {
+            Vector q = {p.x + i * SCREEN_SIZE.x, p.y + j * SCREEN_SIZE.y};
+            if (asteroid->radius_squared >= magnitude_squared(vec_sub(q, asteroid->position)))
+                return true;
+        }
+    }
 
     return false;
 
