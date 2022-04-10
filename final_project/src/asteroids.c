@@ -81,47 +81,6 @@ Vector wrap(Vector, Vector);
 Vector rotate(Vector, float);
 
 
-//================== K E Y S ==================//
-
-#define KEY_NONE 0 // No key pressed
-#define KEY_TAB 0x0D //keyboard TAB
-#define KEY_R 0x2D //keyboard R
-#define KEY_RIGHT 116 // Keyboard Right Arrow
-#define KEY_LEFT 107 // Keyboard Left Arrow
-#define KEY_DOWN 114 // Keyboard Down Arrow
-#define KEY_UP 117 // Keyboard Up Arrow
-#define KEY_SPACE 41 // Keyboard Spacebar
-#define KEY_ESC 0x76 // Keyboard Esc
-
-#define UP 0
-#define DOWN 1
-#define LEFT 2
-#define RIGHT 3
-#define SPACE 4
-#define ESC 5
-#define TAB 6
-#define R 7
-
-#define nKEYS 8
-
-typedef struct Key
-{
-    char code;
-    bool is_down;
-} Key;
-
-Key keys[] = 
-{
-    [UP] = {KEY_UP, false},
-    [DOWN] = {KEY_DOWN, false},
-    [LEFT] = {KEY_LEFT, false},
-    [RIGHT] = {KEY_RIGHT, false},
-    [SPACE] = {KEY_SPACE, false},
-    [ESC] = {KEY_ESC, false},
-    [TAB] = {KEY_TAB, false},
-    [R] = {KEY_R, false},
-};
-
 
 //================== S P A C E S H I P ==================//
 
@@ -132,7 +91,7 @@ Key keys[] =
 #define SHIP_LENGTH 10
 #define SHIP_WIDTH 6
 
-#define SHIP_ROTATION_P_SEC M_PI // 2 second to rotate 360 degrees
+#define SHIP_ROTATION_P_SEC 1.4 * M_PI // 0.7 rotations per second
 #define SHIP_FRICTION 0.55
 #define SHIP_ACCELERATION 150
 #define SHIP_MAX_SPEED 170  // based on real game speed
@@ -215,7 +174,7 @@ void draw_asteroids(Asteroid*);
 
 #define BULLET_SPEED 200
 #define BULLET_SIZE 2
-#define BULLET_COLOR CYAN
+#define BULLET_COLOR PINK
 #define BULLET_COOLDOWN 0.1
 
 struct Bullet {
@@ -264,7 +223,7 @@ typedef struct Game {
     
     int level;
 
-    int lives;
+    int lives, bonus_lives;
 
     bool running;
 
@@ -285,11 +244,6 @@ void update_game(Game*);
 void reset_ship(Game*);
 
 
-void reset_keys();
-
-void update_pressed_keys();
-
-void handle_pressed_keys(Game*);
 
 
 void insert_asteroid(Game*, Asteroid*);
@@ -323,6 +277,54 @@ void update_bullets(Game*);
 void draw_game(Game*);
 
 void draw_lives(Game*);
+
+//================== K E Y S ==================//
+
+#define KEY_NONE 0 // No key pressed
+#define KEY_TAB 0x0D //keyboard TAB
+#define KEY_R 0x2D //keyboard R
+#define KEY_RIGHT 116 // Keyboard Right Arrow
+#define KEY_LEFT 107 // Keyboard Left Arrow
+#define KEY_DOWN 114 // Keyboard Down Arrow
+#define KEY_UP 117 // Keyboard Up Arrow
+#define KEY_SPACE 41 // Keyboard Spacebar
+#define KEY_ESC 0x76 // Keyboard Esc
+
+#define UP 0
+#define DOWN 1
+#define LEFT 2
+#define RIGHT 3
+#define SPACE 4
+#define ESC 5
+#define TAB 6
+#define R 7
+
+#define nKEYS 8
+
+typedef struct Key
+{
+    char code;
+    bool is_down;
+} Key;
+
+Key keys[] = 
+{
+    [UP] = {KEY_UP, false},
+    [DOWN] = {KEY_DOWN, false},
+    [LEFT] = {KEY_LEFT, false},
+    [RIGHT] = {KEY_RIGHT, false},
+    [SPACE] = {KEY_SPACE, false},
+    [ESC] = {KEY_ESC, false},
+    [TAB] = {KEY_TAB, false},
+    [R] = {KEY_R, false},
+};
+
+
+void reset_keys();
+
+void update_pressed_keys();
+
+void handle_pressed_keys(Game*);
 
 
 //================== R E N D E R I N G   &   G R A P H I C S ==================//
@@ -599,7 +601,6 @@ void accelerate_ship(Ship* ship) {
                             vec_mul(rotate(NORTH, ship->angle), 
                                     SHIP_ACCELERATION * dt));
     bound_speed(ship);
-    // printf("%f %f\n", ship->velocity.x, ship->velocity.y);
 }
 
 void update_ship(Ship *ship) {
@@ -627,6 +628,7 @@ void draw_ship(Ship *ship, short int color) {
 
     if (!ship->thrusting) return;
 
+    // draw thruster
     draw_model(ship->vertices + 4, nSHIP_VERTICES, RED);
     draw_model(ship->vertices + 8, nSHIP_VERTICES, YELLOW);
 }
@@ -654,18 +656,18 @@ bool point_in_asteroid(Asteroid *asteroid, int num_vertices, Vector p)
     if (asteroid->radius_squared >= magnitude_squared(vec_sub(p, asteroid->position))) 
         return true;
 
-    // check if warped x point is in polygon
+    // check if un-warped x point is in polygon
     p.x += SCREEN_SIZE.x; 
      if (asteroid->radius_squared >= magnitude_squared(vec_sub(p, asteroid->position)))
         return true;
 
-    // check if warped y point is in polygon
+    // check if un-warped y point is in polygon
     p.y += SCREEN_SIZE.y;
     p.x -= SCREEN_SIZE.x;
     if (asteroid->radius_squared >= magnitude_squared(vec_sub(p, asteroid->position)))
         return true;
         
-    // check if warped x & y point is in polygon
+    // check if un-warped x, y point is in polygon
     p.x += SCREEN_SIZE.x;
     // p = vec_add(p, SCREEN_SIZE);
     if (asteroid->radius_squared >= magnitude_squared(vec_sub(p, asteroid->position))) 
@@ -1359,7 +1361,7 @@ void press_tab(Game* game) {
 void draw_lives(Game* game) {
     int i = 0;
     Ship ship = {.thrusting = false};
-    for (; i < nLIVES; i++) {
+    for (; i < nLIVES + game->bonus_lives; i++) {
         Vector temp = {
             .x = 6 + SHIP_WIDTH * SHIP_SCALE * i,
             .y = 7
@@ -1367,10 +1369,14 @@ void draw_lives(Game* game) {
 
         ship.position = vec_sub(game->size, temp);
 
-        // draw the remaining lives in MAGENTA and the used lives in GREY
-        (i < game->lives) ? 
-        draw_ship(&ship, MAGENTA) : 
-        draw_ship(&ship, GREY);
+        // draw the remaining lives in MAGENTA, the used lives in GREY
+        if (i < game->lives) {
+            draw_ship(&ship, MAGENTA);
+        } else if (i < nLIVES) {
+            draw_ship(&ship, GREY);
+        } else {
+            draw_ship(&ship, BLACK);
+        }
     }
 }
 
@@ -1391,6 +1397,7 @@ void init_game(Game* game) {
     game->score = 0;
     game->level = 1;
     game->lives = nLIVES;
+    game->bonus_lives = 0;
     game->running = true;
 
     // set the asteroid model
@@ -1415,6 +1422,7 @@ void reset_game(Game* game) {
     game->score = 0;
     game->level = 1;
     game->lives = nLIVES;
+    game->bonus_lives = 0;
 }
 
 void reset_ship(Game* game) {
@@ -1593,6 +1601,10 @@ void delete_asteroid(Game* game, Asteroid* a) {
 void update_asteroids(Game* game) {
     if (game->asteroidHead == NULL) {
         game->level++;
+        if (game->level > 0 && game->level % 3 == 0) {
+            game->lives++;
+            game->bonus_lives++;
+        }
         add_random_asteroids(game, game->level * nASTEROIDS);
         return;
     }
@@ -1645,7 +1657,7 @@ bool check_collision(Game* game, Asteroid* a) {
     for (; i < nSHIP_VERTICES; i++) {
         if (point_in_asteroid(a, nASTEROID_VERTICES, game->player.vertices[i])) {
             // update lives
-            game->lives -= 1;
+            game->lives--;
             // reset ship
             reset_ship(game);
             return true;
