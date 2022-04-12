@@ -17,6 +17,7 @@
 #define TIMER_BASE            0xFF202000
 #define PIXEL_BUF_CTRL_BASE   0xFF203020
 #define CHAR_BUF_CTRL_BASE    0xFF203030
+#define AUDIO_BASE            0xFF203040
 
 //#include "address_map_arm.h"
 #define BUF_SIZE 80000 // about 10 seconds of buffer (@ 8K samples/sec)
@@ -1634,34 +1635,35 @@ void shoot_bullet(Game* game) {
     b_cooldown = BULLET_COOLDOWN;
 
     //audio code added here
-    //volatile int * audio_ptr = (int *) AUDIO_BASE;
+    volatile int * red_LED_ptr = (int *)LEDR_BASE;
+    volatile int * audio_ptr = (int *) AUDIO_BASE;
 
     /* used for audio record/playback */
-//    int fifospace;
-//    int buffer_index = 0; int left_buffer[BUF_SIZE];
-//    int right_buffer[BUF_SIZE];
-//
-//    fifospace = *(audio_ptr + 1); // read the audio port fifospace register
-//    if ((fifospace & 0x00FF0000) > BUF_THRESHOLD) // check WSRC
-//    {   // output data until the buffer is empty or the audio-out FIFO // is full
-//        while ((fifospace & 0x00FF0000) && (buffer_index < BUF_SIZE)) {
-//
-//            *(audio_ptr + 2) = left_buffer[buffer_index];
-//            *(audio_ptr + 3) = right_buffer[buffer_index];
-//            ++buffer_index;
-//            fifospace = *(audio_ptr + 1); // read the audio port fifospace register
-//        }
-//    }
+    int fifospace;
+    int buffer_index = 0; int left_buffer[BUF_SIZE];
+    int right_buffer[BUF_SIZE];
 
+    *(red_LED_ptr) = 0x2;
+    fifospace = *(audio_ptr + 1); // read the audio port fifospace register
+    if ((fifospace & 0x00FF0000) > BUF_THRESHOLD) // check WSRC
+    {   // output data until the buffer is empty or the audio-out FIFO // is full
+        while ((fifospace & 0x00FF0000) && (buffer_index < BUF_SIZE)) {
 
+            *(audio_ptr + 2) = left_buffer[buffer_index];
+            *(audio_ptr + 3) = right_buffer[buffer_index];
+            ++buffer_index;
+            fifospace = *(audio_ptr + 1); // read the audio port fifospace register
+        }
+    }
 }
 
 void shoot_alien_bullet(Game* game) {
     if (alienbulletcooldown > 0) return;
 
     // shoot bullet from the tip of the ship
-    Bullet *b = new_bullet(game->alien.vertices[0], -game->alien.angle);
-    // b->velocity = vec_add(game->player.velocity, b->velocity);
+    Bullet *b = new_bullet(game->alien.vertices[0], game->alien.angle);
+    b->velocity = vec_sub(game->player.velocity, b->velocity);
+
     insert_bullet(game, b);
 
     // player recoil from shooting bullet
