@@ -1933,18 +1933,17 @@ void accelerate_alien(Alien* alien) {
 void update_alien(Alien *alien, Game* game) {
     // consider replacing screen size with game->/.size
     //draw_alien(alien, BLACK);
-//    alien->velocity = new_vector();
-//    Vector a = vec_sub(game->player.position, alien->position);
-//    alien->angle = atan(sqrt(magnitude_squared(a)));
+    alien->velocity = new_vector();
+    Vector a = vec_sub(game->player.position, alien->position);
+    alien->angle = atan(sqrt(magnitude_squared(a)));
     //draw_alien(alien, BLACK);
     alien->angle = M_PI;
-    //shoot_alien_bullet(game);
     //alien->velocity = rand_vec(game);
     alien->velocity.x = 10; alien->velocity.y = 10;
     //alien->position = vec_add(alien->position, vec_mul(alien->velocity, dt));
     alien->position = wrap(
             SCREEN_SIZE,
-            vec_add(alien->position, vec_mul(alien->velocity, dt))
+            vec_add(alien->position, vec_mul(a, dt))
     );
 
     // add some friction to the ship when it is not accelerating
