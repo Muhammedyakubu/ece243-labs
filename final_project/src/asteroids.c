@@ -18,6 +18,12 @@
 #define PIXEL_BUF_CTRL_BASE   0xFF203020
 #define CHAR_BUF_CTRL_BASE    0xFF203030
 
+//#include "address_map_arm.h"
+#define BUF_SIZE 80000 // about 10 seconds of buffer (@ 8K samples/sec)
+#define BUF_THRESHOLD 96 // 75% of 128 word buffer
+
+
+
 /* VGA colors */
 #define BLACK 0x0000
 #define WHITE 0xFFFF
@@ -175,7 +181,7 @@ void draw_asteroids(Asteroid*);
 #define BULLET_SPEED 200
 #define BULLET_SIZE 2
 #define BULLET_COLOR PINK
-#define BULLET_COOLDOWN 0.1
+#define BULLET_COOLDOWN 0.05
 
 struct Bullet {
     // The original position of the bullet
@@ -198,6 +204,52 @@ Bullet *new_bullet(Vector position, float angle);
 
 void draw_bullets(Bullet*);
 
+//================== A L I E N ==================//
+
+#define nALIEN_VERTICES_THRUST 20
+#define nALIEN_VERTICES 12
+#define ALIEN_COLOR ORANGE
+#define ALIEN_SCALE 1.3
+#define ALIEN_LENGTH 10
+#define ALIEN_WIDTH 16
+
+#define ALIEN_ACCELERATION 150
+#define ALIEN_MAX_SPEED 170  // based on real game speed
+
+typedef struct Alien {
+    // The position of the ship
+    Vector position;
+    // The velocity of the ship
+    Vector velocity;
+    // The angle the ship is pointing in radians
+    float angle;
+    // The vertices of the ship
+    Vector vertices[nALIEN_VERTICES_THRUST];
+
+    Vector old_vertices[nALIEN_VERTICES_THRUST];
+
+    float radius;
+
+    float radius_squared;
+
+    bool thrusting;
+
+    bool alive;
+} Alien;
+
+
+// Rotates the ship left
+void rotate_alien_left(Alien*);
+// Rotates the ship right
+void rotate_alien_right(Alien*);
+
+void accelerate_alien(Alien*);
+// updates the position and velocity of the ship
+
+void draw_alien(Alien *, short int);
+
+void clear_alien(Alien*);
+
 
 //================== G A M E ==================//
 #define FPS 60
@@ -214,6 +266,8 @@ typedef struct Game {
     Vector size;
 
     Ship player;
+
+    Alien alien;
 
     Asteroid *asteroidHead;
 
@@ -242,7 +296,7 @@ void update_game(Game*);
 
 
 void reset_ship(Game*);
-
+void reset_alien(Game*);
 
 
 
@@ -265,6 +319,10 @@ Bullet *new_bullet(Vector p, float angle);
 
 void shoot_bullet(Game*);
 
+void update_alien(Alien *, Game*);
+
+void shoot_alien_bullet(Game*);
+
 void insert_bullet(Game*, Bullet*);
 
 void delete_bullet(Game*, Bullet*);
@@ -277,6 +335,7 @@ void update_bullets(Game*);
 void draw_game(Game*);
 
 void draw_lives(Game*);
+
 
 //================== K E Y S ==================//
 
@@ -380,7 +439,11 @@ float dt = 1.0/FPS;
 Game game;
 
 // bullet cooldown
-double b_cooldown = 0.2;
+double b_cooldown = BULLET_COOLDOWN;
+
+
+double alienbulletcooldown = BULLET_COOLDOWN;
+
 
 // north vector for calculations
 const Vector NORTH = {0, -1};
@@ -408,6 +471,7 @@ const Vector playerModel[] =
     {0, -8},
     {-3, 2},
     {0, 0},
+
     {-0.5, 2},
     {0, 6},
     {0.5, 2},
@@ -415,6 +479,30 @@ const Vector playerModel[] =
     {-1, 2},
     {0, 8},
     {1, 2},
+};
+
+const Vector alienModel[] = {
+        {0, 0},
+        {6, 2},
+        {8, 0},
+        {6, -2},
+        {3, -2},
+        {2, -6},
+        {0, -8},
+        {-2, -6},
+        {-3, -2},
+        {-6, -2},
+        {-8, 0},
+        {-6, 2},
+        {0, 0},
+
+        {-0.5, 2},
+        {0, 6},
+        {0.5, 2},
+        {0, 0},
+        {-1, 2},
+        {0, 8},
+        {1, 2},
 };
 
 Vector asteroidModel[nASTEROID_VERTICES];
@@ -1397,10 +1485,14 @@ void draw_high_score(Game* game) {
 void init_game(Game* game) {
     game->size = SCREEN_SIZE;
     reset_ship(game);
+    reset_alien(game);
     for (int i = 0; i < nSHIP_VERTICES_THRUST; i++) {
         game->player.old_vertices[i] = game->player.vertices[i];
     }
-   
+    for (int i = 0; i < nALIEN_VERTICES_THRUST; i++) {
+        game->alien.old_vertices[i] = game->alien.vertices[i];
+    }
+
     game->asteroidHead = NULL; 
     game->bulletHead = NULL;
     game->score = 0;
@@ -1425,6 +1517,7 @@ void init_game(Game* game) {
 void reset_game(Game* game) {
     reset_keys();
     reset_ship(game);
+    reset_alien(game);
 
     delete_asteroid_list(game);
     delete_bullet_list(game);
@@ -1443,6 +1536,17 @@ void reset_ship(Game* game) {
     game->player.thrusting = false;
 }
 
+void reset_alien(Game* game) {
+    game->alien.position = rand_vec(game);
+    game->alien.velocity = new_vector();
+    game->alien.angle = 0;
+    game->alien.radius = 6;
+    game->alien.radius_squared = 36;
+    game->alien.thrusting = false;
+    game->alien.alive = true;
+    transform_model(game->alien.vertices, alienModel, nALIEN_VERTICES_THRUST, game->alien.position, 0, game->alien.radius);
+}
+
 void reset_keys() {
     int i = 0;
     for (; i < nKEYS; i++) {
@@ -1454,6 +1558,7 @@ void update_game(Game* game) {
     update_asteroids(game);
     update_bullets(game);
     update_ship(&game->player);
+    update_alien(&game->alien, game);
     draw_score(game);
 }
 
@@ -1461,6 +1566,7 @@ void draw_game(Game *game) {
     draw_asteroids(game->asteroidHead);
     draw_bullets(game->bulletHead);
     draw_ship(&game->player, SHIP_COLOR);
+    draw_alien(&game->alien, PINK);
     draw_lives(game);
     draw_score(game);
 }
@@ -1524,6 +1630,45 @@ void shoot_bullet(Game* game) {
     game->player.position = vec_add(game->player.position, recoil);
 
     b_cooldown = BULLET_COOLDOWN;
+
+    //audio code added here
+    //volatile int * audio_ptr = (int *) AUDIO_BASE;
+
+    /* used for audio record/playback */
+//    int fifospace;
+//    int buffer_index = 0; int left_buffer[BUF_SIZE];
+//    int right_buffer[BUF_SIZE];
+//
+//    fifospace = *(audio_ptr + 1); // read the audio port fifospace register
+//    if ((fifospace & 0x00FF0000) > BUF_THRESHOLD) // check WSRC
+//    {   // output data until the buffer is empty or the audio-out FIFO // is full
+//        while ((fifospace & 0x00FF0000) && (buffer_index < BUF_SIZE)) {
+//
+//            *(audio_ptr + 2) = left_buffer[buffer_index];
+//            *(audio_ptr + 3) = right_buffer[buffer_index];
+//            ++buffer_index;
+//            fifospace = *(audio_ptr + 1); // read the audio port fifospace register
+//        }
+//    }
+
+
+}
+
+void shoot_alien_bullet(Game* game) {
+    if (alienbulletcooldown > 0) return;
+
+    // shoot bullet from the tip of the ship
+    Bullet *b = new_bullet(game->alien.vertices[0], -game->alien.angle);
+    // b->velocity = vec_add(game->player.velocity, b->velocity);
+    insert_bullet(game, b);
+
+    // player recoil from shooting bullet
+    //Vector recoil = vec_mul(b->velocity, -0.01);
+    //game->alien.position = vec_add(game->alien.position, recoil);
+
+    alienbulletcooldown = BULLET_COOLDOWN;
+
+
 }
 
 void handle_pressed_keys(Game* game) {
@@ -1547,6 +1692,7 @@ void handle_pressed_keys(Game* game) {
                     break;
                 case KEY_SPACE:
                     shoot_bullet(game);
+                    //shoot_alien_bullet(game);
                     break;
                 case KEY_ESC:
                     game->running = false;
@@ -1558,8 +1704,8 @@ void handle_pressed_keys(Game* game) {
     }
 
     b_cooldown -= dt;
+    //alienbulletcooldown -= dt;
 }
-
 
 void insert_asteroid(Game* game, Asteroid* a){
     if(game->asteroidHead) 
@@ -1676,6 +1822,8 @@ bool check_collision(Game* game, Asteroid* a) {
     return false;
 }
 
+
+
 void split_asteroid(Game* game, Asteroid* a) {
     int i = 0;
     for (; i < 2; i++) {
@@ -1710,9 +1858,6 @@ void delete_asteroid_list(Game* game) {
     }
     game->asteroidHead = NULL;
 }
-
-
-
 
 void insert_bullet(Game* game, Bullet* b){
     if(game->bulletHead)
@@ -1755,8 +1900,141 @@ void update_bullets(Game* game) {
     }
 }
 
+//================== A L I E N ==================//
+
+void rotate_alien_left(Alien *alien) {
+    alien->angle -= SHIP_ROTATION_P_SEC * dt;
+}
+
+void rotate_alien_right(Alien *alien) {
+    alien->angle += SHIP_ROTATION_P_SEC * dt;
+}
+
+void bound_alien_speed(Alien *alien) {
+    if (alien->velocity.x > SHIP_MAX_SPEED)
+        alien->velocity.x = SHIP_MAX_SPEED;
+    else if (alien->velocity.x < -SHIP_MAX_SPEED)
+        alien->velocity.x = -SHIP_MAX_SPEED;
+    if (alien->velocity.y > SHIP_MAX_SPEED)
+        alien->velocity.y = SHIP_MAX_SPEED;
+    else if (alien->velocity.y < -SHIP_MAX_SPEED)
+        alien->velocity.y = -SHIP_MAX_SPEED;
+}
+
+void accelerate_alien(Alien* alien) {
+    alien->velocity = vec_add(alien->velocity,
+                             vec_mul(rotate(NORTH, alien->angle),
+                                     ALIEN_ACCELERATION * dt));
+    bound_alien_speed(alien);
+}
+
+void update_alien(Alien *alien, Game* game) {
+    // consider replacing screen size with game->/.size
+
+    alien->velocity = new_vector();
+    Vector a = vec_sub(game->player.position, alien->position);
+    alien->angle = atan(sqrt(magnitude_squared(a)));
+    //shoot_alien_bullet(game);
+    alien->position = wrap(
+            SCREEN_SIZE,
+            vec_add(alien->position, vec_mul(alien->velocity, dt))
+    );
+
+    // add some friction to the ship when it is not accelerating
+    if (alien->thrusting)
+        accelerate_alien(alien);
+
+    alien->velocity = vec_mul(alien->velocity, (pow(1 - SHIP_FRICTION, dt)));
+    //alienbulletcooldown -= dt;
+#ifdef PRINT_ALIEN_VELOCITY
+    printf("alien velocity: %f %f\n", alien->velocity.x, alien->velocity.y );
+#endif
+
+}
+
+void draw_alien(Alien *alien, short int color) {
+    clear_alien(alien);
+    transform_model(alien->vertices, alienModel, nALIEN_VERTICES_THRUST, alien->position, alien->angle, 2);
+    draw_model(alien->vertices, nALIEN_VERTICES, color);
+
+    if (!alien->thrusting) return;
+
+    // draw thruster
+    //draw_model(alien->vertices + 4, nALIEN_VERTICES, RED);
+    //draw_model(alien->vertices + 8, nALIEN_VERTICES, YELLOW);
+}
+
+inline bool point_in_alien(Alien *alien, int num_vertices, Vector p)
+{
+// model asteroid as a circle
+/* if (asteroid->radius_squared >= magnitude_squared(vec_sub(p, asteroid->position)))
+    return true;
+
+ // check if un-warped x point is in polygon
+p.x += SCREEN_SIZE.x;
+ if (asteroid->radius_squared >= magnitude_squared(vec_sub(p, asteroid->position)))
+    return true;
+
+// check if un-warped y point is in polygon
+p.y += SCREEN_SIZE.y;
+p.x -= SCREEN_SIZE.x;
+if (asteroid->radius_squared >= magnitude_squared(vec_sub(p, asteroid->position)))
+    return true;
+
+// check if un-warped x, y point is in polygon
+p.x += SCREEN_SIZE.x;
+if (asteroid->radius_squared >= magnitude_squared(vec_sub(p, asteroid->position)))
+    return true; */
 
 
+// testing how much this affects the performance
+for (int i = -1; i <= 1; ++i) {
+for (int j = -1; j <= 1; ++j) {
+Vector q = {p.x + i * SCREEN_SIZE.x, p.y + j * SCREEN_SIZE.y};
+if (alien->radius_squared >= magnitude_squared(vec_sub(q, alien->position)))
+return true;
+}
+}
+
+return false;
+
+// might want to do more precise collision detection later
+}
+
+bool check_collision_alien(Game* game) {
+
+    // check collision with each bullet
+    Bullet* b = game->bulletHead;
+    for (; b != NULL; b = b->next) {
+        if (b->alive && point_in_alien(&game->alien, nASTEROID_VERTICES, b->position)) {
+            // delete bullet
+#ifdef CLEAR_FAST
+            b->alive = false;
+#else
+            delete_bullet(game, b);
+#endif
+            // update score
+            draw_alien(&game->alien, BLACK);
+            game->score += ASTEROID_MIN_SCORE * ASTEROID_MAX_RADIUS/game->alien.radius;
+            return true;
+        }
+    }
+
+    // check collision with ship
+    int i = 0;
+    for (; i < nSHIP_VERTICES; i++) {
+        if (point_in_alien(&game->alien, nALIEN_VERTICES, game->player.vertices[i])) {
+            // update lives
+            game->lives--;
+            // reset ship
+            reset_ship(game);
+            draw_alien(&game->alien, BLACK);
+            return true;
+        }
+    }
+
+    return false;
+}
 
 //================== R E N D E R I N G   &   G R A P H I C S ==================//
 
@@ -1772,7 +2050,6 @@ void wait_for_vsync()
 
     while (*(pixel_ctrl_ptr + 3) & 1); // wait until S bit is 0
 }
-
 void vec_plot_pixel(Vector v, short int line_color)
 {
     plot_pixel(v.x, v.y, line_color);
@@ -1831,7 +2108,7 @@ void draw_line(int x0, int y0, int x1, int y1, short int color)
     }    
 }
 
-void clear_screen() 
+void clear_screen()
 {   
     int y = 0;
     for (; y < RESOLUTION_Y; y++)
@@ -1840,6 +2117,8 @@ void clear_screen()
         draw_line(x0, y, x1, y, BLACK);
     }
 }
+
+
 
 ///////////////////////////////EXPERIMENTAL///////////////////////////////////
 
@@ -1858,6 +2137,9 @@ void copy_olds(Game* game) {
     for (; i < nSHIP_VERTICES_THRUST; i++) {
         game->player.old_vertices[i] = game->player.vertices[i];
     }
+    for (; i < nALIEN_VERTICES_THRUST; i++) {
+        game->alien.old_vertices[i] = game->alien.vertices[i];
+    }
 
     Bullet *b = game->bulletHead;
     for (; b != NULL; b = b->next) {
@@ -1869,6 +2151,10 @@ void copy_olds(Game* game) {
 
 void clear_player(Ship* ship) {
     draw_model(ship->old_vertices, nSHIP_VERTICES_THRUST, BLACK);
+}
+
+void clear_alien(Alien* alien) {
+    draw_model(alien->old_vertices, nALIEN_VERTICES_THRUST, BLACK);
 }
 
 void clear_bullets(Bullet* b) {
@@ -1887,6 +2173,7 @@ void clear_asteroids(Asteroid *a) {
 void clear_screen_fast(Game * g) {
     clear_asteroids(g->asteroidHead);
     clear_player(&g->player);
+    clear_alien(&g->alien);
     clear_bullets(g->bulletHead);
     copy_olds(g);
 }
