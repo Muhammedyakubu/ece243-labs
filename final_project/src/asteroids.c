@@ -366,7 +366,7 @@ Vector rand_vec(Game *game);
 #define CLEAR_FAST
 // #define PRINT_KEYS
 // #define PRINT_VELOCITY
-#define PRINT_FPS
+// #define PRINT_FPS
 
 
 
@@ -570,7 +570,8 @@ Vector wrap(Vector size, Vector p) {
 Vector rotate(Vector v, float a) {
     Vector c;
     c.x = v.x * cos(a) - v.y * sin(a);
-    c.y = - v.x * sin(a) + v.y * cos(a);
+    // c.y = - (v.x * sin(a) - v.y * cos(a));
+    c.y = - (v.x * sin(a) + v.y * cos(a));
     return c;
 }
 
@@ -578,11 +579,11 @@ Vector rotate(Vector v, float a) {
 //================== S P A C E S H I P ==================//
 
 void rotate_ship_left(Ship *ship) {
-    ship->angle -= SHIP_ROTATION_P_SEC * dt;
+    ship->angle += SHIP_ROTATION_P_SEC * dt;
 }
 
 void rotate_ship_right(Ship *ship) {
-    ship->angle += SHIP_ROTATION_P_SEC * dt;
+    ship->angle -= SHIP_ROTATION_P_SEC * dt;
 }
 
 void bound_speed(Ship *ship) {
@@ -653,10 +654,10 @@ Asteroid *new_asteroid(Vector position, Vector velocity, float radius) {
 inline bool point_in_asteroid(Asteroid *asteroid, int num_vertices, Vector p)
 {   
     // model asteroid as a circle
-    /* if (asteroid->radius_squared >= magnitude_squared(vec_sub(p, asteroid->position))) 
+    if (asteroid->radius_squared >= magnitude_squared(vec_sub(p, asteroid->position))) 
         return true;
 
-     // check if un-warped x point is in polygon
+    /*  // check if un-warped x point is in polygon
     p.x += SCREEN_SIZE.x; 
      if (asteroid->radius_squared >= magnitude_squared(vec_sub(p, asteroid->position)))
         return true;
@@ -674,13 +675,13 @@ inline bool point_in_asteroid(Asteroid *asteroid, int num_vertices, Vector p)
 
 
     // testing how much this affects the performance
-    for (int i = -1; i <= 1; ++i) {
+    /* for (int i = -1; i <= 1; ++i) {
         for (int j = -1; j <= 1; ++j) {
             Vector q = {p.x + i * SCREEN_SIZE.x, p.y + j * SCREEN_SIZE.y};
             if (asteroid->radius_squared >= magnitude_squared(vec_sub(q, asteroid->position)))
                 return true;
         }
-    }
+    } */
 
     return false;
 
@@ -1369,7 +1370,7 @@ void press_tab(Game* game) {
 
 void draw_lives(Game* game) {
     int i = 0;
-    Ship ship = {.thrusting = false};
+    Ship ship = {.thrusting = false, .angle = M_PI};
     for (; i < nLIVES + game->bonus_lives; i++) {
         Vector temp = {
             .x = 6 + SHIP_WIDTH * SHIP_SCALE * i,
@@ -1437,7 +1438,7 @@ void reset_game(Game* game) {
 void reset_ship(Game* game) {
     game->player.position = vec_mul(game->size, 0.5);
     game->player.velocity = new_vector();
-    game->player.angle = 0;
+    game->player.angle = M_PI;
     transform_model(game->player.vertices, playerModel, nSHIP_VERTICES_THRUST, 
                     game->player.position, game->player.angle, SHIP_SCALE);
     game->player.thrusting = false;
