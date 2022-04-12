@@ -342,6 +342,7 @@ void draw_lives(Game*);
 #define KEY_NONE 0 // No key pressed
 #define KEY_TAB 0x0D //keyboard TAB
 #define KEY_R 0x2D //keyboard R
+#define KEY_Q 21 //keyboard Q
 #define KEY_RIGHT 116 // Keyboard Right Arrow
 #define KEY_LEFT 107 // Keyboard Left Arrow
 #define KEY_DOWN 114 // Keyboard Down Arrow
@@ -357,8 +358,9 @@ void draw_lives(Game*);
 #define ESC 5
 #define TAB 6
 #define R 7
+#define Q 8
 
-#define nKEYS 8
+#define nKEYS 9
 
 typedef struct Key
 {
@@ -376,6 +378,7 @@ Key keys[] =
     [ESC] = {KEY_ESC, false},
     [TAB] = {KEY_TAB, false},
     [R] = {KEY_R, false},
+    [Q] = {KEY_Q, false},
 };
 
 
@@ -425,7 +428,7 @@ Vector rand_vec(Game *game);
 #define CLEAR_FAST
 // #define PRINT_KEYS
 // #define PRINT_VELOCITY
-#define PRINT_FPS
+// #define PRINT_FPS
 
 
 
@@ -441,9 +444,7 @@ Game game;
 // bullet cooldown
 double b_cooldown = BULLET_COOLDOWN;
 
-
 double alienbulletcooldown = BULLET_COOLDOWN;
-
 
 // north vector for calculations
 const Vector NORTH = {0, -1};
@@ -464,7 +465,7 @@ const Vector NORTH = {0, -1};
     {0, 8},
     {1, 2},
 }; */
-const Vector playerModel[] = 
+const Vector playerModel[] =
 {
     {0, 0},
     {3, 2},
@@ -658,7 +659,8 @@ Vector wrap(Vector size, Vector p) {
 Vector rotate(Vector v, float a) {
     Vector c;
     c.x = v.x * cos(a) - v.y * sin(a);
-    c.y = - v.x * sin(a) + v.y * cos(a);
+    // c.y = - (v.x * sin(a) - v.y * cos(a));
+    c.y = - (v.x * sin(a) + v.y * cos(a));
     return c;
 }
 
@@ -666,11 +668,11 @@ Vector rotate(Vector v, float a) {
 //================== S P A C E S H I P ==================//
 
 void rotate_ship_left(Ship *ship) {
-    ship->angle -= SHIP_ROTATION_P_SEC * dt;
+    ship->angle += SHIP_ROTATION_P_SEC * dt;
 }
 
 void rotate_ship_right(Ship *ship) {
-    ship->angle += SHIP_ROTATION_P_SEC * dt;
+    ship->angle -= SHIP_ROTATION_P_SEC * dt;
 }
 
 void bound_speed(Ship *ship) {
@@ -702,7 +704,7 @@ void update_ship(Ship *ship) {
     if (ship->thrusting) 
         accelerate_ship(ship);
 
-    ship->velocity = vec_mul(ship->velocity, (pow(1 - SHIP_FRICTION, dt))); 
+    ship->velocity = vec_mul(ship->velocity, (pow(1 - SHIP_FRICTION, dt)));
 
     #ifdef PRINT_VELOCITY
     printf("ship velocity: %f %f\n", ship->velocity.x, ship->velocity.y );
@@ -741,10 +743,10 @@ Asteroid *new_asteroid(Vector position, Vector velocity, float radius) {
 inline bool point_in_asteroid(Asteroid *asteroid, int num_vertices, Vector p)
 {   
     // model asteroid as a circle
-    /* if (asteroid->radius_squared >= magnitude_squared(vec_sub(p, asteroid->position))) 
+    if (asteroid->radius_squared >= magnitude_squared(vec_sub(p, asteroid->position))) 
         return true;
 
-     // check if un-warped x point is in polygon
+    /*  // check if un-warped x point is in polygon
     p.x += SCREEN_SIZE.x; 
      if (asteroid->radius_squared >= magnitude_squared(vec_sub(p, asteroid->position)))
         return true;
@@ -762,13 +764,13 @@ inline bool point_in_asteroid(Asteroid *asteroid, int num_vertices, Vector p)
 
 
     // testing how much this affects the performance
-    for (int i = -1; i <= 1; ++i) {
+    /* for (int i = -1; i <= 1; ++i) {
         for (int j = -1; j <= 1; ++j) {
             Vector q = {p.x + i * SCREEN_SIZE.x, p.y + j * SCREEN_SIZE.y};
             if (asteroid->radius_squared >= magnitude_squared(vec_sub(q, asteroid->position)))
                 return true;
         }
-    }
+    } */
 
     return false;
 
@@ -1457,7 +1459,7 @@ void press_tab(Game* game) {
 
 void draw_lives(Game* game) {
     int i = 0;
-    Ship ship = {.thrusting = false};
+    Ship ship = {.thrusting = false, .angle = M_PI};
     for (; i < nLIVES + game->bonus_lives; i++) {
         Vector temp = {
             .x = 6 + SHIP_WIDTH * SHIP_SCALE * i,
@@ -1485,14 +1487,14 @@ void draw_high_score(Game* game) {
 void init_game(Game* game) {
     game->size = SCREEN_SIZE;
     reset_ship(game);
-    reset_alien(game);
+    //reset_alien(game);
     for (int i = 0; i < nSHIP_VERTICES_THRUST; i++) {
         game->player.old_vertices[i] = game->player.vertices[i];
     }
     for (int i = 0; i < nALIEN_VERTICES_THRUST; i++) {
         game->alien.old_vertices[i] = game->alien.vertices[i];
     }
-
+    reset_alien(game);
     game->asteroidHead = NULL; 
     game->bulletHead = NULL;
     game->score = 0;
@@ -1530,7 +1532,7 @@ void reset_game(Game* game) {
 void reset_ship(Game* game) {
     game->player.position = vec_mul(game->size, 0.5);
     game->player.velocity = new_vector();
-    game->player.angle = 0;
+    game->player.angle = M_PI;
     transform_model(game->player.vertices, playerModel, nSHIP_VERTICES_THRUST, 
                     game->player.position, game->player.angle, SHIP_SCALE);
     game->player.thrusting = false;
@@ -1539,7 +1541,7 @@ void reset_ship(Game* game) {
 void reset_alien(Game* game) {
     game->alien.position = rand_vec(game);
     game->alien.velocity = new_vector();
-    game->alien.angle = 0;
+    game->alien.angle = M_PI;
     game->alien.radius = 6;
     game->alien.radius_squared = 36;
     game->alien.thrusting = false;
@@ -1686,16 +1688,18 @@ void handle_pressed_keys(Game* game) {
                 case KEY_UP:
                     game->player.thrusting = true;
                     break;
-                case KEY_DOWN:  // HYPERSPACE
+                case KEY_DOWN:  // HYPERSPACE f
                     game->player.position = rand_vec(game);
                     game->player.velocity = new_vector();
                     break;
                 case KEY_SPACE:
                     shoot_bullet(game);
-                    //shoot_alien_bullet(game);
                     break;
                 case KEY_ESC:
                     game->running = false;
+                    break;
+                case KEY_Q:
+                    shoot_alien_bullet(game);
                     break;
                 default:
                     break;
@@ -1704,7 +1708,7 @@ void handle_pressed_keys(Game* game) {
     }
 
     b_cooldown -= dt;
-    //alienbulletcooldown -= dt;
+    alienbulletcooldown -= dt;
 }
 
 void insert_asteroid(Game* game, Asteroid* a){
@@ -1822,8 +1826,6 @@ bool check_collision(Game* game, Asteroid* a) {
     return false;
 }
 
-
-
 void split_asteroid(Game* game, Asteroid* a) {
     int i = 0;
     for (; i < 2; i++) {
@@ -1930,11 +1932,16 @@ void accelerate_alien(Alien* alien) {
 
 void update_alien(Alien *alien, Game* game) {
     // consider replacing screen size with game->/.size
-
-    alien->velocity = new_vector();
-    Vector a = vec_sub(game->player.position, alien->position);
-    alien->angle = atan(sqrt(magnitude_squared(a)));
+    //draw_alien(alien, BLACK);
+//    alien->velocity = new_vector();
+//    Vector a = vec_sub(game->player.position, alien->position);
+//    alien->angle = atan(sqrt(magnitude_squared(a)));
+    //draw_alien(alien, BLACK);
+    alien->angle = M_PI;
     //shoot_alien_bullet(game);
+    //alien->velocity = rand_vec(game);
+    alien->velocity.x = 10; alien->velocity.y = 10;
+    //alien->position = vec_add(alien->position, vec_mul(alien->velocity, dt));
     alien->position = wrap(
             SCREEN_SIZE,
             vec_add(alien->position, vec_mul(alien->velocity, dt))
@@ -1945,7 +1952,7 @@ void update_alien(Alien *alien, Game* game) {
         accelerate_alien(alien);
 
     alien->velocity = vec_mul(alien->velocity, (pow(1 - SHIP_FRICTION, dt)));
-    //alienbulletcooldown -= dt;
+    alienbulletcooldown -= dt;
 #ifdef PRINT_ALIEN_VELOCITY
     printf("alien velocity: %f %f\n", alien->velocity.x, alien->velocity.y );
 #endif
@@ -1954,6 +1961,7 @@ void update_alien(Alien *alien, Game* game) {
 
 void draw_alien(Alien *alien, short int color) {
     clear_alien(alien);
+
     transform_model(alien->vertices, alienModel, nALIEN_VERTICES_THRUST, alien->position, alien->angle, 2);
     draw_model(alien->vertices, nALIEN_VERTICES, color);
 
@@ -1966,27 +1974,6 @@ void draw_alien(Alien *alien, short int color) {
 
 inline bool point_in_alien(Alien *alien, int num_vertices, Vector p)
 {
-// model asteroid as a circle
-/* if (asteroid->radius_squared >= magnitude_squared(vec_sub(p, asteroid->position)))
-    return true;
-
- // check if un-warped x point is in polygon
-p.x += SCREEN_SIZE.x;
- if (asteroid->radius_squared >= magnitude_squared(vec_sub(p, asteroid->position)))
-    return true;
-
-// check if un-warped y point is in polygon
-p.y += SCREEN_SIZE.y;
-p.x -= SCREEN_SIZE.x;
-if (asteroid->radius_squared >= magnitude_squared(vec_sub(p, asteroid->position)))
-    return true;
-
-// check if un-warped x, y point is in polygon
-p.x += SCREEN_SIZE.x;
-if (asteroid->radius_squared >= magnitude_squared(vec_sub(p, asteroid->position)))
-    return true; */
-
-
 // testing how much this affects the performance
 for (int i = -1; i <= 1; ++i) {
 for (int j = -1; j <= 1; ++j) {
@@ -2014,7 +2001,7 @@ bool check_collision_alien(Game* game) {
             delete_bullet(game, b);
 #endif
             // update score
-            draw_alien(&game->alien, BLACK);
+            //draw_alien(&game->alien, BLACK);
             game->score += ASTEROID_MIN_SCORE * ASTEROID_MAX_RADIUS/game->alien.radius;
             return true;
         }
@@ -2028,7 +2015,7 @@ bool check_collision_alien(Game* game) {
             game->lives--;
             // reset ship
             reset_ship(game);
-            draw_alien(&game->alien, BLACK);
+            //draw_alien(&game->alien, BLACK);
             return true;
         }
     }
