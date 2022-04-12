@@ -175,7 +175,7 @@ void draw_asteroids(Asteroid*);
 #define BULLET_SPEED 200
 #define BULLET_SIZE 2
 #define BULLET_COLOR PINK
-#define BULLET_COOLDOWN 0.1
+#define BULLET_COOLDOWN 0.05
 
 struct Bullet {
     // The original position of the bullet
@@ -380,7 +380,7 @@ float dt = 1.0/FPS;
 Game game;
 
 // bullet cooldown
-double b_cooldown = 0.2;
+double b_cooldown = BULLET_COOLDOWN;
 
 // north vector for calculations
 const Vector NORTH = {0, -1};
