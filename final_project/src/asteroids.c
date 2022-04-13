@@ -313,6 +313,8 @@ void split_asteroid(Game* game, Asteroid* a);
 
 bool check_collision(Game* game, Asteroid* a);
 
+bool check_collision_alien(Game* game);
+
 void add_random_asteroids(Game*, int);
 
 
@@ -851,11 +853,11 @@ void main_screen(Game* game) {
                 Vector a = {x, y};
                 Vector b = {x - 4, y + 17};
                 Vector c = {x + 4, y + 17};
-                Vector d = {x - 2, y + 9};
-                Vector e = {x + 2, y + 9};
+                Vector d = {x, y + 13};
                 vec_draw_line(a, b, MAGENTA);
                 vec_draw_line(a, c, MAGENTA);
-                vec_draw_line(d, e, MAGENTA);
+                vec_draw_line(b, d, MAGENTA);
+                vec_draw_line(c, d, MAGENTA);
             }
             if (i==3) {
                 Vector a = {x + 4, y - 1};
@@ -1540,14 +1542,15 @@ void reset_ship(Game* game) {
 }
 
 void reset_alien(Game* game) {
-    game->alien.position = rand_vec(game);
+    Vector a = {-100, -100};
+    game->alien.position = vec_sub(rand_vec(game), a);
     game->alien.velocity = new_vector();
     game->alien.angle = M_PI;
     game->alien.radius = 6;
     game->alien.radius_squared = 36;
     game->alien.thrusting = false;
     game->alien.alive = true;
-    transform_model(game->alien.vertices, alienModel, nALIEN_VERTICES_THRUST, game->alien.position, 0, game->alien.radius);
+    transform_model(game->alien.vertices, alienModel, nALIEN_VERTICES_THRUST, game->alien.position, M_PI, game->alien.radius);
 }
 
 void reset_keys() {
@@ -1787,12 +1790,35 @@ void update_asteroids(Game* game) {
                 #endif
             }
         }
+        if (check_collision_alien(game)) {
+            #ifdef CLEAR_FAST
+            game->alien.alive = false;
+            #else
+            draw_alien(game->alien, BLACK);
+            #endif
+        }
 
         // printf("asteroid position: ");
         // printf("%f, %f\n", a->position.x, a->position.y);
         // printf("asteroid velocity: ");
         // printf("%f, %f\n", a->velocity.x, a->velocity.y);
     }
+}
+
+inline bool point_in_ship(Game* game, int num_vertices, Vector p)
+{
+// testing how much this affects the performance
+for (int i = -1; i <= 1; ++i) {
+for (int j = -1; j <= 1; ++j) {
+Vector q = {p.x + i * SCREEN_SIZE.x, p.y + j * SCREEN_SIZE.y};
+if (9 >= magnitude_squared(vec_sub(q, game->player.position)))
+return true;
+}
+}
+
+return false;
+
+// might want to do more precise collision detection later
 }
 
 bool check_collision(Game* game, Asteroid* a) {
@@ -1809,6 +1835,20 @@ bool check_collision(Game* game, Asteroid* a) {
             #endif
             // update score
             game->score += ASTEROID_MIN_SCORE * ASTEROID_MAX_RADIUS/a->radius;
+            return true;
+        }
+        //check if bullet collided with ship
+        if (b->alive && point_in_ship(game, nSHIP_VERTICES_THRUST, b->position)) {
+            // delete bullet
+            #ifdef CLEAR_FAST
+            b->alive = false;
+            #else
+            delete_bullet(game, b);
+            #endif
+            // update score
+            game->score += ASTEROID_MIN_SCORE * ASTEROID_MAX_RADIUS/a->radius;
+            game->lives--;
+            reset_ship(game);
             return true;
         }
     }
@@ -1933,21 +1973,22 @@ void accelerate_alien(Alien* alien) {
 }
 
 void update_alien(Alien *alien, Game* game) {
-    // consider replacing screen size with game->/.size
-    //draw_alien(alien, BLACK);
     alien->velocity = new_vector();
     Vector a = vec_sub(game->player.position, alien->position);
-    alien->angle = atan(sqrt(magnitude_squared(a)));
-    //draw_alien(alien, BLACK);
-    alien->angle = M_PI;
+    alien->angle = - M_PI / 2 - 5 * atan(sqrt(magnitude_squared(a)));
+    alien->angle = atan(a.y / a.x);
     //alien->velocity = rand_vec(game);
-    alien->velocity.x = 10; alien->velocity.y = 10;
+    //alien->velocity.x = 10; alien->velocity.y = 10;
     //alien->position = vec_add(alien->position, vec_mul(alien->velocity, dt));
     alien->position = wrap(
             SCREEN_SIZE,
-            vec_add(alien->position, vec_mul(a, dt))
+            vec_add(alien->position, vec_mul(rand_vec(game), (dt/2 * pow(-1, rand() % 4))))
     );
-
+//    alien->position = wrap(
+//            SCREEN_SIZE,
+//            vec_add(alien->position, vec_mul(rand_vec(game), (dt/2)))
+//    );
+    //alien->position.y = (double) alien->position.y / 3 - 200;
     // add some friction to the ship when it is not accelerating
     if (alien->thrusting)
         accelerate_alien(alien);
@@ -1963,14 +2004,14 @@ void update_alien(Alien *alien, Game* game) {
 void draw_alien(Alien *alien, short int color) {
     clear_alien(alien);
 
-    transform_model(alien->vertices, alienModel, nALIEN_VERTICES_THRUST, alien->position, alien->angle, 2);
+    transform_model(alien->vertices, alienModel, nALIEN_VERTICES_THRUST, alien->position, M_PI, 2);
     draw_model(alien->vertices, nALIEN_VERTICES, color);
 
     if (!alien->thrusting) return;
 
     // draw thruster
-    //draw_model(alien->vertices + 4, nALIEN_VERTICES, RED);
-    //draw_model(alien->vertices + 8, nALIEN_VERTICES, YELLOW);
+    draw_model(alien->vertices + 4, nALIEN_VERTICES, RED);
+    draw_model(alien->vertices + 8, nALIEN_VERTICES, YELLOW);
 }
 
 inline bool point_in_alien(Alien *alien, int num_vertices, Vector p)
@@ -1994,7 +2035,7 @@ bool check_collision_alien(Game* game) {
     // check collision with each bullet
     Bullet* b = game->bulletHead;
     for (; b != NULL; b = b->next) {
-        if (b->alive && point_in_alien(&game->alien, nASTEROID_VERTICES, b->position)) {
+        if (b->alive && point_in_alien(&game->alien, nALIEN_VERTICES, b->position)) {
             // delete bullet
 #ifdef CLEAR_FAST
             b->alive = false;
@@ -2003,7 +2044,7 @@ bool check_collision_alien(Game* game) {
 #endif
             // update score
             //draw_alien(&game->alien, BLACK);
-            game->score += ASTEROID_MIN_SCORE * ASTEROID_MAX_RADIUS/game->alien.radius;
+            //game->score += ASTEROID_MIN_SCORE * ASTEROID_MAX_RADIUS/game->alien.radius;
             return true;
         }
     }
