@@ -2125,7 +2125,7 @@ void copy_olds(Game* game) {
     for (; i < nSHIP_VERTICES_THRUST; i++) {
         game->player.old_vertices[i] = game->player.vertices[i];
     }
-    for (; i < nALIEN_VERTICES_THRUST; i++) {
+    for (i = 0; i < nALIEN_VERTICES_THRUST; i++) {
         game->alien.old_vertices[i] = game->alien.vertices[i];
     }
 
