@@ -1638,7 +1638,7 @@ void shoot_bullet(Game* game) {
     b_cooldown = BULLET_COOLDOWN;
 
     //audio code added here
-    volatile int * red_LED_ptr = (int *)LEDR_BASE;
+    //volatile int * red_LED_ptr = (int *)LEDR_BASE;
     volatile int * audio_ptr = (int *) AUDIO_BASE;
 
     /* used for audio record/playback */
@@ -1658,6 +1658,9 @@ void shoot_bullet(Game* game) {
             fifospace = *(audio_ptr + 1); // read the audio port fifospace register
         }
     }
+
+    *(audio_ptr + 2) = (-1265); // audio_ptr points to the AUDIO_BASE
+    *(audio_ptr + 3) = (707);
 }
 
 void shoot_alien_bullet(Game* game) {
