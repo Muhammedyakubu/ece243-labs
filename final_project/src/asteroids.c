@@ -367,6 +367,7 @@ Vector rand_vec(Game *game);
 // #define PRINT_KEYS
 // #define PRINT_VELOCITY
 // #define PRINT_FPS
+#define CPULATOR
 
 
 
@@ -573,7 +574,11 @@ Vector rotate(Vector v, float a) {
     Vector c;
     c.x = v.x * cos(a) - v.y * sin(a);
     // c.y = - (v.x * sin(a) - v.y * cos(a));
+    #ifdef CPULATOR
+    c.y = - v.x * sin(a) + v.y * cos(a);
+    #else 
     c.y = - (v.x * sin(a) + v.y * cos(a));
+    #endif
     return c;
 }
 
@@ -581,11 +586,19 @@ Vector rotate(Vector v, float a) {
 //================== S P A C E S H I P ==================//
 
 void rotate_ship_left(Ship *ship) {
+    #ifdef CPULATOR
+    ship->angle -= SHIP_ROTATION_P_SEC * dt;
+    #else
     ship->angle += SHIP_ROTATION_P_SEC * dt;
+    #endif
 }
 
 void rotate_ship_right(Ship *ship) {
+    #ifdef CPULATOR
+    ship->angle += SHIP_ROTATION_P_SEC * dt;
+    #else
     ship->angle -= SHIP_ROTATION_P_SEC * dt;
+    #endif
 }
 
 void bound_speed(Ship *ship) {
@@ -1373,7 +1386,14 @@ void press_tab(Game* game) {
 
 void draw_lives(Game* game) {
     int i = 0;
-    Ship ship = {.thrusting = false, .angle = M_PI};
+    Ship ship = {
+        .thrusting = false, 
+        #ifdef CPULATOR
+        .angle = 0
+        #else
+        .angle = M_PI
+        #endif 
+    };
     for (; i < nLIVES + game->bonus_lives; i++) {
         Vector temp = {
             .x = 6 + SHIP_WIDTH * SHIP_SCALE * i,
@@ -1441,7 +1461,12 @@ void reset_game(Game* game) {
 void reset_ship(Game* game) {
     game->player.position = vec_mul(game->size, 0.5);
     game->player.velocity = new_vector();
-    game->player.angle = M_PI;
+    game->player.angle = 
+    #ifdef CPULATOR
+    0;
+    #else
+    M_PI;
+    #endif
     transform_model(game->player.vertices, playerModel, nSHIP_VERTICES_THRUST, 
                     game->player.position, game->player.angle, SHIP_SCALE);
     game->player.thrusting = false;
