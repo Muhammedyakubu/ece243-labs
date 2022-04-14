@@ -667,8 +667,8 @@ Vector wrap(Vector size, Vector p) {
 Vector rotate(Vector v, float a) {
     Vector c;
     c.x = v.x * cos(a) - v.y * sin(a);
-    // c.y = - (v.x * sin(a) - v.y * cos(a));
-    c.y = - (v.x * sin(a) + v.y * cos(a));
+    // c.y = - (v.x * sin(a) + v.y * cos(a));
+    c.y = - v.x * sin(a) + v.y * cos(a);    // cpulator is weird
     return c;
 }
 
@@ -676,11 +676,11 @@ Vector rotate(Vector v, float a) {
 //================== S P A C E S H I P ==================//
 
 void rotate_ship_left(Ship *ship) {
-    ship->angle += SHIP_ROTATION_P_SEC * dt;
+    ship->angle -= SHIP_ROTATION_P_SEC * dt;
 }
 
 void rotate_ship_right(Ship *ship) {
-    ship->angle -= SHIP_ROTATION_P_SEC * dt;
+    ship->angle += SHIP_ROTATION_P_SEC * dt;
 }
 
 void bound_speed(Ship *ship) {
