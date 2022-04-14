@@ -210,7 +210,7 @@ void draw_bullets(Bullet*);
 #define nALIEN_VERTICES_THRUST 20
 #define nALIEN_VERTICES 12
 #define ALIEN_COLOR ORANGE
-#define ALIEN_SCALE 1.3
+#define ALIEN_SCALE 2
 #define ALIEN_LENGTH 10
 #define ALIEN_WIDTH 16
 
@@ -750,23 +750,6 @@ inline bool point_in_asteroid(Asteroid *asteroid, int num_vertices, Vector p)
     // model asteroid as a circle
     if (asteroid->radius_squared >= magnitude_squared(vec_sub(p, asteroid->position))) 
         return true;
-
-    /*  // check if un-warped x point is in polygon
-    p.x += SCREEN_SIZE.x; 
-     if (asteroid->radius_squared >= magnitude_squared(vec_sub(p, asteroid->position)))
-        return true;
-
-    // check if un-warped y point is in polygon
-    p.y += SCREEN_SIZE.y;
-    p.x -= SCREEN_SIZE.x;
-    if (asteroid->radius_squared >= magnitude_squared(vec_sub(p, asteroid->position)))
-        return true;
-        
-    // check if un-warped x, y point is in polygon
-    p.x += SCREEN_SIZE.x;
-    if (asteroid->radius_squared >= magnitude_squared(vec_sub(p, asteroid->position))) 
-        return true; */
-
 
     // testing how much this affects the performance
     /* for (int i = -1; i <= 1; ++i) {
@@ -1547,13 +1530,13 @@ void reset_alien(Game* game) {
     Vector a = {-100, -100};
     game->alien.position = vec_sub(rand_vec(game), a);
 
-    game->alien.position = rand_vec(game);
+    //game->alien.position = rand_vec(game);
     alienpositiontemp = game->alien.position;
 
     game->alien.velocity = new_vector();
     game->alien.angle = M_PI;
-    game->alien.radius = 6;
-    game->alien.radius_squared = 36;
+    game->alien.radius = 20;
+    game->alien.radius_squared = 400;
     game->alien.thrusting = false;
     game->alien.alive = true;
     transform_model(game->alien.vertices, alienModel, nALIEN_VERTICES_THRUST, game->alien.position, M_PI, game->alien.radius);
@@ -1804,12 +1787,13 @@ void update_asteroids(Game* game) {
                 #endif
             }
         }
-        if (check_collision_alien(game)) {
-//            #ifdef CLEAR_FAST
-//            #else
-            reset_alien(game);
-//            #endif
-        }
+        check_collision_alien(game);
+//        {
+////            #ifdef CLEAR_FAST
+////            #else
+//            reset_alien(game);
+////            #endif
+//        }
 
         // printf("asteroid position: ");
         // printf("%f, %f\n", a->position.x, a->position.y);
@@ -1992,17 +1976,6 @@ void update_alien(Alien *alien, Game* game) {
     alien->angle = atan(a.y / a.x);
     //alien->velocity = rand_vec(game);
     alienangle = M_PI;
-
-//    if (anglecounter == 0) {alienangle = 0;}
-//    if (anglecounter == 1) {alienangle = 1*M_PI/8;}
-//    if (anglecounter == 2) {alienangle = 2*M_PI/4;}
-//    if (anglecounter == 3) {alienangle = 3*M_PI/4;}
-//    if (anglecounter == 4) {alienangle = 4*M_PI/4;}
-//    if (anglecounter == 5) {alienangle = 5*M_PI/4;}
-//    if (anglecounter == 6) {alienangle = 6*M_PI/4;}
-//    if (anglecounter == 7) {alienangle = 7*M_PI/4;}
-
-
     alien->velocity.x = -30; alien->velocity.y = 0;
     alien->position = vec_add(alien->position, vec_mul(alien->velocity, dt));
     alienpositiontemp = game->alien.position;
@@ -2032,7 +2005,7 @@ void update_alien(Alien *alien, Game* game) {
 void draw_alien(Alien *alien, short int color) {
     clear_alien(alien);
 
-    transform_model(alien->vertices, alienModel, nALIEN_VERTICES_THRUST, alien->position, M_PI, 2);
+    transform_model(alien->vertices, alienModel, nALIEN_VERTICES_THRUST, alien->position, M_PI, ALIEN_SCALE);
     draw_model(alien->vertices, nALIEN_VERTICES, color);
 
     if (!alien->thrusting) return;
@@ -2048,7 +2021,7 @@ inline bool point_in_alien1(Alien *alien, int num_vertices, Vector p)
 for (int i = -1; i <= 1; ++i) {
 for (int j = -1; j <= 1; ++j) {
 Vector q = {p.x + i * SCREEN_SIZE.x, p.y + j * SCREEN_SIZE.y};
-if (900 >= magnitude_squared(vec_sub(q, alien->position)))
+if (alien->radius_squared >= magnitude_squared(vec_sub(q, alien->position)))
 return true;
 }
 }
@@ -2056,17 +2029,17 @@ return false;
 // might want to do more precise collision detection later
 }
 
-inline bool point_in_alien2(Alien *alien, int num_vertices, Vector p)
-{
+inline bool point_in_alien(Game* game, int num_vertices, Vector p) {
 // testing how much this affects the performance
-for (int i = -1; i <= 1; ++i) {
-for (int j = -1; j <= 1; ++j) {
-Vector q = {p.x + i * SCREEN_SIZE.x, p.y + j * SCREEN_SIZE.y};
-if (36 >= magnitude_squared(vec_sub(q, alien->position)))
-return true;
-}
-}
-return false;
+//    for (int i = -1; i <= 1; ++i) {
+//        for (int j = -1; j <= 1; ++j) {
+//            Vector q = {p.x + i * SCREEN_SIZE.x, p.y + j * SCREEN_SIZE.y};
+//            if (100 >= magnitude_squared(vec_sub(q, game->alien.position)))
+//            return true;
+//        }
+//    }
+    if (game->alien.radius_squared >= magnitude_squared(vec_sub(p, game->alien.position))) {return true;}
+    else {return false;}
 // might want to do more precise collision detection later
 }
 
@@ -2074,23 +2047,23 @@ bool check_collision_alien(Game* game) {
 
     // check collision with each bullet
     Bullet* b = game->bulletHead;
-//    for (; b != NULL; b = b->next) {
-////        if (b->alive && point_in_alien2(&game->alien, nALIEN_VERTICES, b->position)) {
-//          if ((b->position.x == game->alien.position.x) && (b->position.y == game->alien.position.y)) {
-//            // delete bullet
-//#ifdef CLEAR_FAST
-//            b->alive = false;
-//#else
-//            delete_bullet(game, b);
-//
-//#endif
-//            // update score
-//            //draw_alien(&game->alien, BLACK);
-//            //game->score += ASTEROID_MIN_SCORE * ASTEROID_MAX_RADIUS/game->alien.radius;
-//            //reset_alien(game);
-//            return true;
-//        }
-//    }
+    for (; b != NULL; b = b->next) {
+//        if (b->alive && point_in_alien2(&game->alien, nALIEN_VERTICES, b->position)) {
+          if (point_in_alien1(&game->alien, nALIEN_VERTICES, b->position)) {
+            // delete bullet
+#ifdef CLEAR_FAST
+            b->alive = false;
+#else
+            delete_bullet(game, b);
+
+#endif
+            // update score
+            //draw_alien(&game->alien, BLACK);
+            //game->score += ASTEROID_MIN_SCORE * ASTEROID_MAX_RADIUS/game->alien.radius;
+            reset_alien(game);
+            return true;
+        }
+    }
 
     // check collision with ship
     int i = 0;
