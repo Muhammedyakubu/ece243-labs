@@ -1661,7 +1661,18 @@ void shoot_alien_bullet(Game* game) {
     anglecounter++;
     if (anglecounter > 15) {anglecounter = 0;}
     alienangle = anglecounter * M_PI / 8;
-    Bullet *b = new_bullet(game->alien.position, alienangle);
+    Vector c;
+    c.x = game->alien.position.x;
+    c.y = game->alien.position.y;
+
+    if ((alienangle > M_PI / 2) || (alienangle <= 3 * M_PI / 2)) {c.y -= 40;}
+    if ((alienangle > 3 * M_PI / 2) || (alienangle <= M_PI / 2)) {c.y += 70;}
+//    if ((anglecounter >= 2) || (anglecounter < 6 )) {c.x -= 20;}
+//    if ((anglecounter >= 6) || (anglecounter < 10 )) {c.y += 20;}
+//    if ((anglecounter >= 10) || (anglecounter < 14 )) {c.x += 20;}
+//    if ((anglecounter >= 14) || (anglecounter < 2 )) {c.y -= 20;}
+
+    Bullet *b = new_bullet(c, alienangle);
     //b->velocity = vec_sub(game->player.velocity, b->velocity);
 
     insert_bullet(game, b);
@@ -2021,7 +2032,7 @@ inline bool point_in_alien1(Alien *alien, int num_vertices, Vector p)
 for (int i = -1; i <= 1; ++i) {
 for (int j = -1; j <= 1; ++j) {
 Vector q = {p.x + i * SCREEN_SIZE.x, p.y + j * SCREEN_SIZE.y};
-if (alien->radius_squared >= magnitude_squared(vec_sub(q, alien->position)))
+if (alien->radius_squared >= magnitude_squared(vec_sub(p, alien->position)))
 return true;
 }
 }
@@ -2029,7 +2040,7 @@ return false;
 // might want to do more precise collision detection later
 }
 
-inline bool point_in_alien(Game* game, int num_vertices, Vector p) {
+inline bool point_in_alien(Alien* alien, int num_vertices, Vector p) {
 // testing how much this affects the performance
 //    for (int i = -1; i <= 1; ++i) {
 //        for (int j = -1; j <= 1; ++j) {
@@ -2038,7 +2049,7 @@ inline bool point_in_alien(Game* game, int num_vertices, Vector p) {
 //            return true;
 //        }
 //    }
-    if (game->alien.radius_squared >= magnitude_squared(vec_sub(p, game->alien.position))) {return true;}
+    if (alien->radius_squared >= magnitude_squared(vec_sub(p, alien->position))) {return true;}
     else {return false;}
 // might want to do more precise collision detection later
 }
@@ -2049,7 +2060,7 @@ bool check_collision_alien(Game* game) {
     Bullet* b = game->bulletHead;
     for (; b != NULL; b = b->next) {
 //        if (b->alive && point_in_alien2(&game->alien, nALIEN_VERTICES, b->position)) {
-          if (point_in_alien1(&game->alien, nALIEN_VERTICES, b->position)) {
+          if (point_in_alien(&game->alien, nALIEN_VERTICES, b->position)) {
             // delete bullet
 #ifdef CLEAR_FAST
             b->alive = false;
@@ -2059,7 +2070,7 @@ bool check_collision_alien(Game* game) {
 #endif
             // update score
             //draw_alien(&game->alien, BLACK);
-            //game->score += ASTEROID_MIN_SCORE * ASTEROID_MAX_RADIUS/game->alien.radius;
+            game->score += ASTEROID_MIN_SCORE * ASTEROID_MAX_RADIUS/game->alien.radius;
             reset_alien(game);
             return true;
         }
