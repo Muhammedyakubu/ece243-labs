@@ -1450,7 +1450,7 @@ void press_tab(Game* game) {
 
 void draw_lives(Game* game) {
     int i = 0;
-    Ship ship = {.thrusting = false, .angle = M_PI};
+    Ship ship = {.thrusting = false, /* .angle = M_PI */};
     for (; i < nLIVES + game->bonus_lives; i++) {
         Vector temp = {
             .x = 6 + SHIP_WIDTH * SHIP_SCALE * i,
