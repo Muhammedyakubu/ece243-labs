@@ -552,7 +552,7 @@ Vector vec_mul(Vector a, float sf) {
 }
 
 // We don't calculate the actual magnitude as sqrt is expensive
-inline float magnitude_squared(Vector v) {
+float magnitude_squared(Vector v) {
     return v.x * v.x + v.y * v.y;
 }
 
@@ -651,14 +651,14 @@ Asteroid *new_asteroid(Vector position, Vector velocity, float radius) {
     return a;
 }
 
-inline bool point_in_asteroid(Asteroid *asteroid, int num_vertices, Vector p)
+bool point_in_asteroid(Asteroid *asteroid, int num_vertices, Vector p)
 {   
     // model asteroid as a circle
     if (asteroid->radius_squared >= magnitude_squared(vec_sub(p, asteroid->position))) 
         return true;
 
-    /*  // check if un-warped x point is in polygon
-    p.x += SCREEN_SIZE.x; 
+    // check if un-warped x point is in polygon
+    /*p.x += SCREEN_SIZE.x; 
      if (asteroid->radius_squared >= magnitude_squared(vec_sub(p, asteroid->position)))
         return true;
 
@@ -670,6 +670,7 @@ inline bool point_in_asteroid(Asteroid *asteroid, int num_vertices, Vector p)
         
     // check if un-warped x, y point is in polygon
     p.x += SCREEN_SIZE.x;
+    // p = vec_add(p, SCREEN_SIZE);
     if (asteroid->radius_squared >= magnitude_squared(vec_sub(p, asteroid->position))) 
         return true; */
 
