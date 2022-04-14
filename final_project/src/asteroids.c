@@ -385,6 +385,8 @@ double b_cooldown = 0.2;
 // north vector for calculations
 const Vector NORTH = {0, -1};
 
+// for processing ps2 input
+char byte1 = 0, byte2 = 0, byte3 = 0;
 
 
 
@@ -1477,7 +1479,7 @@ void delay(float seconds) {
 void update_pressed_keys() {
     volatile int* PS2_ptr = (int*)PS2_BASE;
     int PS2_data, RVALID, RAVAIL;
-    char byte1 = 0, byte2 = 0, byte3 = 0;
+    char byte1, byte2, byte3;
 
     PS2_data = *(PS2_ptr); 
     RVALID = (PS2_data & 0x8000) >> 15; // extract the RVALID field
