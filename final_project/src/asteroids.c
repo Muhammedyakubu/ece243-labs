@@ -667,7 +667,7 @@ Vector wrap(Vector size, Vector p) {
 Vector rotate(Vector v, float a) {
     Vector c;
     c.x = v.x * cos(a) - v.y * sin(a);
-    // c.y = - (v.x * sin(a) - v.y * cos(a));
+    //c.y = - (v.x * sin(a) - v.y * cos(a));
     c.y = - (v.x * sin(a) + v.y * cos(a));
     return c;
 }
