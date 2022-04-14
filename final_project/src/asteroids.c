@@ -1648,10 +1648,11 @@ void shoot_bullet(Game* game) {
     if (b_cooldown > 0) return;
 
     // shoot bullet from the tip of the ship
-    Vector c = game->player.vertices[2];
-    if ((game->player.angle > M_PI / 2) || (game->player.angle <= 3 * M_PI / 2)) {c.y -= 10;}
-    if ((game->player.angle > 3 * M_PI / 2) || (game->player.angle <= M_PI / 2)) {c.y += 10;}
-    Bullet *b = new_bullet(game->player.vertices[2], game->player.angle);
+    Vector p_front = game->player.vertices[2];
+/*     Vector incr = rotate(vec_mul(NORTH, 20), game->player.angle);
+    Vector b_pos = vec_add(p_front, incr); */
+    Vector b_pos = vec_add(p_front, vec_sub(game->player.vertices[2], game->player.vertices[0]));
+    Bullet *b = new_bullet(b_pos, game->player.angle);
     // b->velocity = vec_add(game->player.velocity, b->velocity);
     insert_bullet(game, b);
 
@@ -2065,7 +2066,13 @@ void update_alien(Alien *alien, Game* game) {
 void draw_alien(Alien *alien, short int color) {
     clear_alien(alien);
 
-    transform_model(alien->vertices, alienModel, nALIEN_VERTICES_THRUST, alien->position, M_PI, ALIEN_SCALE);
+    #ifdef CPULATOR
+    double alienAngle = 0;
+    #else
+    double alienAngle = M_PI;
+    #endif
+
+    transform_model(alien->vertices, alienModel, nALIEN_VERTICES_THRUST, alien->position, alienAngle, ALIEN_SCALE);
     draw_model(alien->vertices, nALIEN_VERTICES, color);
 
     if (!alien->thrusting) return;
