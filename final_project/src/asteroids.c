@@ -509,6 +509,8 @@ const Vector alienModel[] = {
         {1, 2},
 };
 
+
+Vector alienpositiontemp = {100, 100};
 Vector asteroidModel[nASTEROID_VERTICES];
 
 int main(void)
@@ -1544,6 +1546,10 @@ void reset_ship(Game* game) {
 void reset_alien(Game* game) {
     Vector a = {-100, -100};
     game->alien.position = vec_sub(rand_vec(game), a);
+
+    game->alien.position = rand_vec(game);
+    alienpositiontemp = game->alien.position;
+
     game->alien.velocity = new_vector();
     game->alien.angle = M_PI;
     game->alien.radius = 6;
@@ -1662,19 +1668,24 @@ void shoot_bullet(Game* game) {
 //    *(audio_ptr + 2) = (-1265); // audio_ptr points to the AUDIO_BASE
 //    *(audio_ptr + 3) = (707);
 }
-
+double alienangle;
+int anglecounter = 0;
 void shoot_alien_bullet(Game* game) {
     if (alienbulletcooldown > 0) return;
 
     // shoot bullet from the tip of the ship
-    Bullet *b = new_bullet(game->alien.vertices[0], game->alien.angle);
-    b->velocity = vec_sub(game->player.velocity, b->velocity);
+    //Bullet *b = new_bullet(game->alien.vertices[0], game->alien.angle);
+    anglecounter++;
+    if (anglecounter > 15) {anglecounter = 0;}
+    alienangle = anglecounter * M_PI / 8;
+    Bullet *b = new_bullet(game->alien.position, alienangle);
+    //b->velocity = vec_sub(game->player.velocity, b->velocity);
 
     insert_bullet(game, b);
 
     // player recoil from shooting bullet
-    //Vector recoil = vec_mul(b->velocity, -0.01);
-    //game->alien.position = vec_add(game->alien.position, recoil);
+//    Vector recoil = vec_mul(b->velocity, -0.01);
+//    game->alien.position = vec_add(a, recoil);
 
     alienbulletcooldown = BULLET_COOLDOWN;
 
@@ -1794,11 +1805,10 @@ void update_asteroids(Game* game) {
             }
         }
         if (check_collision_alien(game)) {
-            #ifdef CLEAR_FAST
-            game->alien.alive = false;
-            #else
-            draw_alien(game->alien, BLACK);
-            #endif
+//            #ifdef CLEAR_FAST
+//            #else
+            reset_alien(game);
+//            #endif
         }
 
         // printf("asteroid position: ");
@@ -1981,16 +1991,31 @@ void update_alien(Alien *alien, Game* game) {
     alien->angle = - M_PI / 2 - 5 * atan(sqrt(magnitude_squared(a)));
     alien->angle = atan(a.y / a.x);
     //alien->velocity = rand_vec(game);
-    alien->velocity.x = 20; alien->velocity.y = 0;
+    alienangle = M_PI;
+
+//    if (anglecounter == 0) {alienangle = 0;}
+//    if (anglecounter == 1) {alienangle = 1*M_PI/8;}
+//    if (anglecounter == 2) {alienangle = 2*M_PI/4;}
+//    if (anglecounter == 3) {alienangle = 3*M_PI/4;}
+//    if (anglecounter == 4) {alienangle = 4*M_PI/4;}
+//    if (anglecounter == 5) {alienangle = 5*M_PI/4;}
+//    if (anglecounter == 6) {alienangle = 6*M_PI/4;}
+//    if (anglecounter == 7) {alienangle = 7*M_PI/4;}
+
+
+    alien->velocity.x = -30; alien->velocity.y = 0;
     alien->position = vec_add(alien->position, vec_mul(alien->velocity, dt));
+    alienpositiontemp = game->alien.position;
+    alien->position = wrap(
+            SCREEN_SIZE,
+            alien->position
+    );
+    //shoot_alien_bullet(game);
 //    alien->position = wrap(
 //            SCREEN_SIZE,
 //            vec_add(alien->position, vec_mul(rand_vec(game), (dt/2 * pow(-1, rand() % 4))))
 //    );
-//    alien->position = wrap(
-//            SCREEN_SIZE,
-//            vec_add(alien->position, vec_mul(rand_vec(game), (dt/2)))
-//    );
+
     //alien->position.y = (double) alien->position.y / 3 - 200;
     // add some friction to the ship when it is not accelerating
     if (alien->thrusting)
@@ -2017,7 +2042,7 @@ void draw_alien(Alien *alien, short int color) {
     draw_model(alien->vertices + 8, nALIEN_VERTICES, YELLOW);
 }
 
-inline bool point_in_alien(Alien *alien, int num_vertices, Vector p)
+inline bool point_in_alien1(Alien *alien, int num_vertices, Vector p)
 {
 // testing how much this affects the performance
 for (int i = -1; i <= 1; ++i) {
@@ -2027,9 +2052,21 @@ if (900 >= magnitude_squared(vec_sub(q, alien->position)))
 return true;
 }
 }
-
 return false;
+// might want to do more precise collision detection later
+}
 
+inline bool point_in_alien2(Alien *alien, int num_vertices, Vector p)
+{
+// testing how much this affects the performance
+for (int i = -1; i <= 1; ++i) {
+for (int j = -1; j <= 1; ++j) {
+Vector q = {p.x + i * SCREEN_SIZE.x, p.y + j * SCREEN_SIZE.y};
+if (36 >= magnitude_squared(vec_sub(q, alien->position)))
+return true;
+}
+}
+return false;
 // might want to do more precise collision detection later
 }
 
@@ -2037,27 +2074,28 @@ bool check_collision_alien(Game* game) {
 
     // check collision with each bullet
     Bullet* b = game->bulletHead;
-    for (; b != NULL; b = b->next) {
-        if (b->alive && point_in_alien(&game->alien, nALIEN_VERTICES, b->position)) {
-            // delete bullet
-#ifdef CLEAR_FAST
-            b->alive = false;
-#else
-            delete_bullet(game, b);
-
-#endif
-            // update score
-            //draw_alien(&game->alien, BLACK);
-            game->score += ASTEROID_MIN_SCORE * ASTEROID_MAX_RADIUS/game->alien.radius;
-            reset_alien(game);
-            return true;
-        }
-    }
+//    for (; b != NULL; b = b->next) {
+////        if (b->alive && point_in_alien2(&game->alien, nALIEN_VERTICES, b->position)) {
+//          if ((b->position.x == game->alien.position.x) && (b->position.y == game->alien.position.y)) {
+//            // delete bullet
+//#ifdef CLEAR_FAST
+//            b->alive = false;
+//#else
+//            delete_bullet(game, b);
+//
+//#endif
+//            // update score
+//            //draw_alien(&game->alien, BLACK);
+//            //game->score += ASTEROID_MIN_SCORE * ASTEROID_MAX_RADIUS/game->alien.radius;
+//            //reset_alien(game);
+//            return true;
+//        }
+//    }
 
     // check collision with ship
     int i = 0;
     for (; i < nSHIP_VERTICES; i++) {
-        if (point_in_alien(&game->alien, nALIEN_VERTICES, game->player.vertices[i])) {
+        if (point_in_alien1(&game->alien, nALIEN_VERTICES, game->player.vertices[i])) {
             // update lives
             game->lives--;
             // reset ship
