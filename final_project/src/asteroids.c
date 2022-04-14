@@ -1621,6 +1621,9 @@ void shoot_bullet(Game* game) {
     if (b_cooldown > 0) return;
 
     // shoot bullet from the tip of the ship
+    Vector c = game->player.vertices[2];
+    if ((game->player.angle > M_PI / 2) || (game->player.angle <= 3 * M_PI / 2)) {c.y -= 10;}
+    if ((game->player.angle > 3 * M_PI / 2) || (game->player.angle <= M_PI / 2)) {c.y += 10;}
     Bullet *b = new_bullet(game->player.vertices[2], game->player.angle);
     // b->velocity = vec_add(game->player.velocity, b->velocity);
     insert_bullet(game, b);
