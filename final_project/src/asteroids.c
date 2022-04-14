@@ -1638,29 +1638,29 @@ void shoot_bullet(Game* game) {
     b_cooldown = BULLET_COOLDOWN;
 
     //audio code added here
-    //volatile int * red_LED_ptr = (int *)LEDR_BASE;
-    volatile int * audio_ptr = (int *) AUDIO_BASE;
-
-    /* used for audio record/playback */
-    int fifospace;
-    int buffer_index = 0; int left_buffer[BUF_SIZE];
-    int right_buffer[BUF_SIZE];
-
-    *(red_LED_ptr) = 0x2;
-    fifospace = *(audio_ptr + 1); // read the audio port fifospace register
-    if ((fifospace & 0x00FF0000) > BUF_THRESHOLD) // check WSRC
-    {   // output data until the buffer is empty or the audio-out FIFO // is full
-        while ((fifospace & 0x00FF0000) && (buffer_index < BUF_SIZE)) {
-
-            *(audio_ptr + 2) = left_buffer[buffer_index];
-            *(audio_ptr + 3) = right_buffer[buffer_index];
-            ++buffer_index;
-            fifospace = *(audio_ptr + 1); // read the audio port fifospace register
-        }
-    }
-
-    *(audio_ptr + 2) = (-1265); // audio_ptr points to the AUDIO_BASE
-    *(audio_ptr + 3) = (707);
+//    //volatile int * red_LED_ptr = (int *)LEDR_BASE;
+//    volatile int * audio_ptr = (int *) AUDIO_BASE;
+//
+//    /* used for audio record/playback */
+//    int fifospace;
+//    int buffer_index = 0; int left_buffer[BUF_SIZE];
+//    int right_buffer[BUF_SIZE];
+//
+//    *(red_LED_ptr) = 0x2;
+//    fifospace = *(audio_ptr + 1); // read the audio port fifospace register
+//    if ((fifospace & 0x00FF0000) > BUF_THRESHOLD) // check WSRC
+//    {   // output data until the buffer is empty or the audio-out FIFO // is full
+//        while ((fifospace & 0x00FF0000) && (buffer_index < BUF_SIZE)) {
+//
+//            *(audio_ptr + 2) = left_buffer[buffer_index];
+//            *(audio_ptr + 3) = right_buffer[buffer_index];
+//            ++buffer_index;
+//            fifospace = *(audio_ptr + 1); // read the audio port fifospace register
+//        }
+//    }
+//
+//    *(audio_ptr + 2) = (-1265); // audio_ptr points to the AUDIO_BASE
+//    *(audio_ptr + 3) = (707);
 }
 
 void shoot_alien_bullet(Game* game) {
@@ -1981,12 +1981,12 @@ void update_alien(Alien *alien, Game* game) {
     alien->angle = - M_PI / 2 - 5 * atan(sqrt(magnitude_squared(a)));
     alien->angle = atan(a.y / a.x);
     //alien->velocity = rand_vec(game);
-    //alien->velocity.x = 10; alien->velocity.y = 10;
-    //alien->position = vec_add(alien->position, vec_mul(alien->velocity, dt));
-    alien->position = wrap(
-            SCREEN_SIZE,
-            vec_add(alien->position, vec_mul(rand_vec(game), (dt/2 * pow(-1, rand() % 4))))
-    );
+    alien->velocity.x = 20; alien->velocity.y = 0;
+    alien->position = vec_add(alien->position, vec_mul(alien->velocity, dt));
+//    alien->position = wrap(
+//            SCREEN_SIZE,
+//            vec_add(alien->position, vec_mul(rand_vec(game), (dt/2 * pow(-1, rand() % 4))))
+//    );
 //    alien->position = wrap(
 //            SCREEN_SIZE,
 //            vec_add(alien->position, vec_mul(rand_vec(game), (dt/2)))
@@ -2023,7 +2023,7 @@ inline bool point_in_alien(Alien *alien, int num_vertices, Vector p)
 for (int i = -1; i <= 1; ++i) {
 for (int j = -1; j <= 1; ++j) {
 Vector q = {p.x + i * SCREEN_SIZE.x, p.y + j * SCREEN_SIZE.y};
-if (alien->radius_squared >= magnitude_squared(vec_sub(q, alien->position)))
+if (196 >= magnitude_squared(vec_sub(q, alien->position)))
 return true;
 }
 }
@@ -2044,10 +2044,12 @@ bool check_collision_alien(Game* game) {
             b->alive = false;
 #else
             delete_bullet(game, b);
+
 #endif
             // update score
             //draw_alien(&game->alien, BLACK);
-            //game->score += ASTEROID_MIN_SCORE * ASTEROID_MAX_RADIUS/game->alien.radius;
+            game->score += ASTEROID_MIN_SCORE * ASTEROID_MAX_RADIUS/game->alien.radius;
+            reset_alien(game);
             return true;
         }
     }
