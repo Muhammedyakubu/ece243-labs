@@ -2023,7 +2023,7 @@ inline bool point_in_alien(Alien *alien, int num_vertices, Vector p)
 for (int i = -1; i <= 1; ++i) {
 for (int j = -1; j <= 1; ++j) {
 Vector q = {p.x + i * SCREEN_SIZE.x, p.y + j * SCREEN_SIZE.y};
-if (196 >= magnitude_squared(vec_sub(q, alien->position)))
+if (900 >= magnitude_squared(vec_sub(q, alien->position)))
 return true;
 }
 }
