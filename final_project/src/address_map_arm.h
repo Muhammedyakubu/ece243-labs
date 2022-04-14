@@ -18,7 +18,7 @@
 #define LEDR_BASE             0xFF200000
 #define HEX3_HEX0_BASE        0xFF200020
 #define HEX5_HEX4_BASE        0xFF200030
-#define SW_BASE               0xFF200040
+#define SW_BASE               0xFF200040q
 #define KEY_BASE              0xFF200050
 #define JP1_BASE              0xFF200060
 #define JP2_BASE              0xFF200070

@@ -435,6 +435,7 @@ Vector rand_vec(Game *game);
 // #define PRINT_KEYS
 // #define PRINT_VELOCITY
 // #define PRINT_FPS
+#define CPULATOR
 
 
 
@@ -455,6 +456,8 @@ double alienbulletcooldown = BULLET_COOLDOWN;
 // north vector for calculations
 const Vector NORTH = {0, -1};
 
+// for processing ps2 input
+char byte1 = 0, byte2 = 0, byte3 = 0;
 
 
 
@@ -649,7 +652,7 @@ Vector vec_mul(Vector a, float sf) {
 }
 
 // We don't calculate the actual magnitude as sqrt is expensive
-inline float magnitude_squared(Vector v) {
+float magnitude_squared(Vector v) {
     return v.x * v.x + v.y * v.y;
 }
 
@@ -667,8 +670,12 @@ Vector wrap(Vector size, Vector p) {
 Vector rotate(Vector v, float a) {
     Vector c;
     c.x = v.x * cos(a) - v.y * sin(a);
-    //c.y = - (v.x * sin(a) - v.y * cos(a));
+
+    #ifdef CPULATOR
+    c.y = - v.x * sin(a) + v.y * cos(a);
+    #else
     c.y = - (v.x * sin(a) + v.y * cos(a));
+    #endif
     return c;
 }
 
@@ -676,11 +683,19 @@ Vector rotate(Vector v, float a) {
 //================== S P A C E S H I P ==================//
 
 void rotate_ship_left(Ship *ship) {
+    #ifdef CPULATOR
+    ship->angle -= SHIP_ROTATION_P_SEC * dt;
+    #else
     ship->angle += SHIP_ROTATION_P_SEC * dt;
+    #endif
 }
 
 void rotate_ship_right(Ship *ship) {
+    #ifdef CPULATOR
+    ship->angle += SHIP_ROTATION_P_SEC * dt;
+    #else
     ship->angle -= SHIP_ROTATION_P_SEC * dt;
+    #endif
 }
 
 void bound_speed(Ship *ship) {
@@ -748,7 +763,7 @@ Asteroid *new_asteroid(Vector position, Vector velocity, float radius) {
     return a;
 }
 
-inline bool point_in_asteroid(Asteroid *asteroid, int num_vertices, Vector p)
+bool point_in_asteroid(Asteroid *asteroid, int num_vertices, Vector p)
 {   
     // model asteroid as a circle
     if (asteroid->radius_squared >= magnitude_squared(vec_sub(p, asteroid->position))) 
@@ -1450,7 +1465,14 @@ void press_tab(Game* game) {
 
 void draw_lives(Game* game) {
     int i = 0;
-    Ship ship = {.thrusting = false, .angle = M_PI};
+    Ship ship = {
+        .thrusting = false, 
+        #ifdef CPULATOR
+        .angle = 0
+        #else
+        .angle = M_PI
+        #endif 
+    };
     for (; i < nLIVES + game->bonus_lives; i++) {
         Vector temp = {
             .x = 6 + SHIP_WIDTH * SHIP_SCALE * i,
@@ -1523,7 +1545,12 @@ void reset_game(Game* game) {
 void reset_ship(Game* game) {
     game->player.position = vec_mul(game->size, 0.5);
     game->player.velocity = new_vector();
-    game->player.angle = M_PI;
+    game->player.angle = 
+    #ifdef CPULATOR
+    0;
+    #else
+    M_PI;
+    #endif
     transform_model(game->player.vertices, playerModel, nSHIP_VERTICES_THRUST, 
                     game->player.position, game->player.angle, SHIP_SCALE);
     game->player.thrusting = false;
@@ -1581,7 +1608,7 @@ void delay(float seconds) {
 void update_pressed_keys() {
     volatile int* PS2_ptr = (int*)PS2_BASE;
     int PS2_data, RVALID, RAVAIL;
-    char byte1 = 0, byte2 = 0, byte3 = 0;
+    char byte1, byte2, byte3;
 
     PS2_data = *(PS2_ptr); 
     RVALID = (PS2_data & 0x8000) >> 15; // extract the RVALID field
@@ -1621,10 +1648,11 @@ void shoot_bullet(Game* game) {
     if (b_cooldown > 0) return;
 
     // shoot bullet from the tip of the ship
-    Vector c = game->player.vertices[2];
-    if ((game->player.angle > M_PI / 2) || (game->player.angle <= 3 * M_PI / 2)) {c.y -= 10;}
-    if ((game->player.angle > 3 * M_PI / 2) || (game->player.angle <= M_PI / 2)) {c.y += 10;}
-    Bullet *b = new_bullet(game->player.vertices[2], game->player.angle);
+    Vector p_front = game->player.vertices[2];
+/*     Vector incr = rotate(vec_mul(NORTH, 20), game->player.angle);
+    Vector b_pos = vec_add(p_front, incr); */
+    Vector b_pos = vec_add(p_front, vec_sub(game->player.vertices[2], game->player.vertices[0]));
+    Bullet *b = new_bullet(b_pos, game->player.angle);
     // b->velocity = vec_add(game->player.velocity, b->velocity);
     insert_bullet(game, b);
 
@@ -2038,7 +2066,13 @@ void update_alien(Alien *alien, Game* game) {
 void draw_alien(Alien *alien, short int color) {
     clear_alien(alien);
 
-    transform_model(alien->vertices, alienModel, nALIEN_VERTICES_THRUST, alien->position, M_PI, ALIEN_SCALE);
+    #ifdef CPULATOR
+    double alienAngle = 0;
+    #else
+    double alienAngle = M_PI;
+    #endif
+
+    transform_model(alien->vertices, alienModel, nALIEN_VERTICES_THRUST, alien->position, alienAngle, ALIEN_SCALE);
     draw_model(alien->vertices, nALIEN_VERTICES, color);
 
     if (!alien->thrusting) return;
