@@ -217,6 +217,9 @@ void draw_bullets(Bullet*);
 #define ALIEN_ACCELERATION 150
 #define ALIEN_MAX_SPEED 170  // based on real game speed
 
+double alienshootcooldown = 0.1;
+double alientimer = 10;
+
 typedef struct Alien {
     // The position of the ship
     Vector position;
@@ -1561,7 +1564,9 @@ void draw_game(Game *game) {
     draw_asteroids(game->asteroidHead);
     draw_bullets(game->bulletHead);
     draw_ship(&game->player, SHIP_COLOR);
-    draw_alien(&game->alien, PINK);
+    if (alientimer <= 0) {
+        draw_alien(&game->alien, PINK);
+    }
     draw_lives(game);
     draw_score(game);
 }
@@ -1666,7 +1671,7 @@ void shoot_alien_bullet(Game* game) {
     c.y = game->alien.position.y;
 
     if ((alienangle > M_PI / 2) || (alienangle <= 3 * M_PI / 2)) {c.y -= 40;}
-    if ((alienangle > 3 * M_PI / 2) || (alienangle <= M_PI / 2)) {c.y += 70;}
+    if ((alienangle > 3 * M_PI / 2) || (alienangle <= M_PI / 2)) {c.y += 65;}
 //    if ((anglecounter >= 2) || (anglecounter < 6 )) {c.x -= 20;}
 //    if ((anglecounter >= 6) || (anglecounter < 10 )) {c.y += 20;}
 //    if ((anglecounter >= 10) || (anglecounter < 14 )) {c.x += 20;}
@@ -1813,20 +1818,30 @@ void update_asteroids(Game* game) {
     }
 }
 
-inline bool point_in_ship(Game* game, int num_vertices, Vector p)
-{
-// testing how much this affects the performance
-for (int i = -1; i <= 1; ++i) {
-for (int j = -1; j <= 1; ++j) {
-Vector q = {p.x + i * SCREEN_SIZE.x, p.y + j * SCREEN_SIZE.y};
-if (9 >= magnitude_squared(vec_sub(q, game->player.position)))
-return true;
-}
+bool in_triangle(Vector p, Vector a, Vector b, Vector c) {
+    Vector ac, ab, ap;
+    ac = vec_sub(c, a);
+    ab = vec_sub(b, a);
+    ap = vec_sub(p, a);
+
+    int cdotc, cdotb, cdotp, bdotb, bdotp;
+    cdotc = ac.x * ac.x + ac.y * ac.y; //dot_product(ac, ac);
+    cdotb = ac.x * ab.x + ac.y * ab.y; //dot_product(ac, ab);
+    cdotp = ac.x * ap.x + ac.y * ap.y; //dot_product(ac, ap);
+    bdotb = ab.x * ab.x + ab.y * ab.y; //dot_product(ab, ab);
+    bdotp = ab.x * ap.x + ac.y * ap.y; //dot_product(ab, ap);
+
+    float inv;
+    float u, v;
+    inv = 1.0f/ (cdotc * bdotb - cdotb * cdotb);
+    u = (bdotb * cdotp - cdotb * bdotp) * inv;
+    v = (cdotc * bdotp - cdotb * cdotp) * inv;
+
+    return (u >= 0) && (v >= 0) && (u + v <= 1);
 }
 
-return false;
-
-// might want to do more precise collision detection later
+inline bool point_in_ship(Game* game, int num_vertices, Vector p) {
+    return in_triangle(p, game->player.vertices[1], game->player.vertices[2], game->player.vertices[3]);
 }
 
 bool check_collision(Game* game, Asteroid* a) {
@@ -1981,6 +1996,9 @@ void accelerate_alien(Alien* alien) {
 }
 
 void update_alien(Alien *alien, Game* game) {
+    if (alientimer > 0) {alientimer -= dt; return;}
+    alien->alive = true;
+
     alien->velocity = new_vector();
     Vector a = vec_sub(game->player.position, alien->position);
     alien->angle = - M_PI / 2 - 5 * atan(sqrt(magnitude_squared(a)));
@@ -1994,7 +2012,7 @@ void update_alien(Alien *alien, Game* game) {
             SCREEN_SIZE,
             alien->position
     );
-    //shoot_alien_bullet(game);
+    if (alienshootcooldown <= 0) {shoot_alien_bullet(game); alienshootcooldown = 1;}
 //    alien->position = wrap(
 //            SCREEN_SIZE,
 //            vec_add(alien->position, vec_mul(rand_vec(game), (dt/2 * pow(-1, rand() % 4))))
@@ -2007,6 +2025,7 @@ void update_alien(Alien *alien, Game* game) {
 
     alien->velocity = vec_mul(alien->velocity, (pow(1 - SHIP_FRICTION, dt)));
     alienbulletcooldown -= dt;
+    alienshootcooldown -= dt;
 #ifdef PRINT_ALIEN_VELOCITY
     printf("alien velocity: %f %f\n", alien->velocity.x, alien->velocity.y );
 #endif
@@ -2071,6 +2090,7 @@ bool check_collision_alien(Game* game) {
             // update score
             //draw_alien(&game->alien, BLACK);
             game->score += ASTEROID_MIN_SCORE * ASTEROID_MAX_RADIUS/game->alien.radius;
+            alientimer = 10;
             reset_alien(game);
             return true;
         }
